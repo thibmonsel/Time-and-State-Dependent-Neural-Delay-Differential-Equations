@@ -90,7 +90,7 @@ if __name__ == "__main__":
 
     length_strategy = (1.0,)
     epoch_strategy = (500,)
-    lr_strategy = (1e-4,)
+    lr_strategy = (0.01,)
 
     json_filename = "hyper_parameters.json"
     dic_data = {

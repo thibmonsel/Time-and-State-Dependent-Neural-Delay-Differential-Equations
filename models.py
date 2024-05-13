@@ -338,7 +338,6 @@ class NeuralDDE(eqx.Module):
             dt0=ts[1] - ts[0],
             y0=lambda t: y0,
             stepsize_controller=diffrax.PIDController(rtol=1e-6, atol=1e-9),
-            max_steps=500,
             saveat=diffrax.SaveAt(ts=ts, dense=True),
             delays=self.delays,
             made_jump=True,
