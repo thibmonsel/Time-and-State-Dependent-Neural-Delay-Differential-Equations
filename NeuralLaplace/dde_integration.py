@@ -225,12 +225,12 @@ def get_other_history_fn_dataset(name, device):
     return other_history_trajectories, amplitude_other_history, time_other_history
 
 
-noise_level = 0
-name_dataset = "time_dependent"
 fifty_percent = False
-max_delays = {"time_dependent": 3, "state_dependent": 1 / 2, "diffusion_delay": 1, "time_dependent_50_percent" : 3}
-epochs_dict = {"time_dependent": 2000, "state_dependent": 1000, "diffusion_delay": 500,  "time_dependent_50_percent" : 2000}
-lr_dict = {"time_dependent": 1e-3, "state_dependent": 1e-3, "diffusion_delay": 1e-4,  "time_dependent_50_percent" : 1e-3}
+noise_level = 0
+name_dataset = "state_dependent"
+max_delays = {"time_dependent": 3, "state_dependent": 1 / 2, "diffusion_delay": 1}
+epochs_dict = {"time_dependent": 2000, "state_dependent": 1000, "diffusion_delay": 500}
+lr_dict = {"time_dependent": 1e-3, "state_dependent": 1e-3, "diffusion_delay": 1e-4}
 lr, epochs = lr_dict[name_dataset], epochs_dict[name_dataset]
 tse_loss, noisyless_tse_mse = [], []
 
@@ -238,7 +238,7 @@ tse_loss, noisyless_tse_mse = [], []
 for train_test_split_idx in range(1, 6):
     os.makedirs("../results/" + str(name_dataset) + f"/split_index_{train_test_split_idx}/", exist_ok=True )
 
-    if name_dataset == "time_dependent" or name_dataset == "time_dependent_50_percent":
+    if name_dataset == "time_dependent" :
         if noise_level is None:
             raise ValueError("Noise level must be specified (0,2,5 or 10)")
         t = (
@@ -262,7 +262,7 @@ for train_test_split_idx in range(1, 6):
             .to(device)
         )
 
-    t_history = torch.arange(-max_delays[name_dataset], 0.0, (t[1] - t[0]) / 2)
+    t_history = torch.arange(-max_delays[name_dataset], 0.0, (t[1] - t[0]))
     t_history = t_history.to(device)
     t = torch.cat([t_history, t]) + max_delays[name_dataset]
 
