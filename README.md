@@ -32,6 +32,9 @@ You must install diffrax locally by :
 cd diffrax/
 pip install . 
 cd ..
+cd NeuralLaplace
+pip install .
+cd ..
 ```
 
 To launch the training you must refer the `seed` and the model (e.g. `["anode", "ode", "dde", "latent_ode"]`) used along with the noise level (only for the Time Dependent dataset)
