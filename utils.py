@@ -13,6 +13,23 @@ import jaxlib
 import matplotlib.pyplot as plt
 import numpy as np
 import numpy.random as random
+import matplotlib.colors as colors
+
+dic_act = {
+    "relu": jnn.relu,
+    "tanh": jnn.tanh,
+    "softplus": jnn.softplus,
+    "elu": jnn.elu,
+    "sigmoid": jnn.sigmoid,
+    "silu": jnn.silu,
+    "gelu": jnn.gelu,
+    "id": lambda x: x,
+    "swish": jnn.swish,
+    "hard_tanh": jnn.hard_tanh,
+    "lecun_tanh": lambda x: 1.7159 * jnn.tanh(2 / 3 * x),
+    "mish": lambda x: x * jnn.tanh(jnp.log(1 + jnn.sigmoid(x))),
+}
+
 
 def get_number_params(model):
     leaves = jax.tree_util.tree_leaves(model)
@@ -110,18 +127,140 @@ def plot_phase_space_subplots(
     plt.show()
 
 
-def predict(node, dde, anode, latent_ode, key, ts, ystest):
+def predict(node, dde, anode, latent_ode, key, ts, ystest, a_sample=None):
     model_keys = jrandom.split(key, ystest.shape[0])
-    ypred_ode, _ = jax.vmap(node, (None, 0))(ts, ystest[:, 0])
-    ypred_dde, _ = jax.vmap(dde, (None, 0))(ts, ystest[:, 0])
+    if a_sample is None:
+        ypred_ode, _ = jax.vmap(node, (None, 0))(ts, ystest[:, 0])
+        ypred_dde, _ = jax.vmap(dde, (None, 0))(ts, ystest[:, 0])
+        ypred_latent, _ = jax.vmap(latent_ode.sample_deterministic, (None, 0, 0))(
+            ts, ystest, model_keys
+        )
+        y0_anode = jnp.hstack(
+            [
+                ystest[:, 0],
+                jnp.zeros((ystest.shape[0], anode.augmented_dim)),
+            ]
+        )
+        anode_ypred, _ = jax.vmap(anode, (None, 0))(ts, y0_anode)
+        return ypred_ode, anode_ypred, ypred_dde, ypred_latent
+    else:
+        xs = jnp.linspace(0, 1.0, 100)
+        ypred_ode = jax.vmap(node, (None, None, 0))(ts, xs, a_sample)
+        ypred_dde = jax.vmap(node, (None, None, 0))(ts, xs, a_sample)
+        ypred_latent, _ = jax.vmap(latent_ode.sample_deterministic, (None, 0, 0))(
+            ts, ystest, model_keys
+        )
+        anode_ypred = jax.vmap(anode, (None, None, 0))(ts, xs, a_sample)
+        return ypred_ode, anode_ypred, ypred_dde, ypred_latent
+
+
+def predict_other_history(
+    node,
+    dde,
+    anode,
+    latent_ode,
+    key,
+    ts,
+    ts_history,
+    y0_other_history,
+    ys_other_history,
+):
+    model_keys = jrandom.split(key, ys_other_history.shape[0])
+    ypred_ode, _ = jax.vmap(node, (None, 0))(ts, ys_other_history[:, 0])
+    ypred_dde, _ = jax.vmap(dde, (None, 0, 0))(ts, y0_other_history, ts_history)
     ypred_latent, _ = jax.vmap(latent_ode.sample_deterministic, (None, 0, 0))(
-        ts, ystest, model_keys
+        ts, ys_other_history, model_keys
     )
     y0_anode = jnp.hstack(
         [
-            ystest[:, 0],
-            jnp.zeros((ystest.shape[0], anode.augmented_dim)),
+            ys_other_history[:, 0],
+            jnp.zeros((ys_other_history.shape[0], anode.augmented_dim)),
         ]
     )
+
     anode_ypred, _ = jax.vmap(anode, (None, 0))(ts, y0_anode)
     return ypred_ode, anode_ypred, ypred_dde, ypred_latent
+
+
+def plot_subplots_1d(
+    nb_subplots, ts, ode_ys, anode_ys, latent_ode_ys, dde_ys, laplace_ys, ys_truth
+):
+    nb_datapoint, pred_length, _ = dde_ys.shape
+    random_idx = random.randint(0, nb_datapoint - 1, size=1, dtype=int)
+    font = {"size": 25}
+
+    plt.rc("font", **font)
+    maxi, mini = 0, 0
+    labels = ["truth", "ode", "anode", "laplace", "latent_ode", "sddde"]
+    for ys_pred, i in zip(
+        (ys_truth, ode_ys, anode_ys, laplace_ys, latent_ode_ys, dde_ys),
+        [i for i in range(len(labels))],
+    ):
+        maxi = max(maxi, np.max(ys_pred[random_idx]).all())
+        mini = min(mini, np.max(ys_pred[random_idx]).all())
+    fig, axes = plt.subplots(figsize=(4.2 * 4.2, 4.2), nrows=1, ncols=len(labels))
+    for ys_pred, i in zip(
+        (ys_truth, ode_ys, anode_ys, laplace_ys, latent_ode_ys, dde_ys),
+        [i for i in range(len(labels))],
+    ):
+        im = axes[i].imshow(
+            np.squeeze(ys_pred[random_idx]),
+            vmin=mini,
+            vmax=maxi,
+            extent=[0, 1, 4, 0],
+            aspect=0.25,
+            cmap="ocean_r",
+        )
+        axes[i].invert_yaxis()
+        axes[i].set_xlabel("u(x,t)")
+        if i == 0:
+            axes[i].set_ylabel("t")
+        axes[i].set_title("{}".format(labels[i]))
+
+        fig.colorbar(
+            im, ax=axes[i], orientation="horizontal"
+        )  # ax=axes.ravel().tolist()
+    plt.tight_layout()
+    plt.show()
+
+
+def plot_subplots_diff_1d(
+    nb_subplots, ts, ode_ys, anode_ys, latent_ode_ys, dde_ys, laplace_ys, ys_truth
+):
+    nb_datapoint, pred_length, _ = dde_ys.shape
+    random_idx = random.randint(0, nb_datapoint - 1, size=1, dtype=int)
+    font = {"size": 25}
+
+    plt.rc("font", **font)
+    maxi = 0
+    labels = ["truth", "ode", "anode", "laplace", "latent_ode", "sddde"]
+    fig, axes = plt.subplots(
+        figsize=(4.2 * 4.2, 4.2), nrows=1, ncols=len(labels)
+    )  # figsize=(4*4,4),extent=[0,4,1,0],
+    for ys_pred, i in zip(
+        (ys_truth, ode_ys, anode_ys, laplace_ys, latent_ode_ys, dde_ys),
+        [i for i in range(len(labels))],
+    ):
+        maxi = max(
+            maxi, jnp.max(jnp.abs((ys_pred[random_idx] - ys_truth[random_idx]))).all()
+        )
+    for ys_pred, i in zip(
+        (ys_truth, ode_ys, anode_ys, laplace_ys, latent_ode_ys, dde_ys),
+        [i for i in range(len(labels))],
+    ):
+        im = axes[i].imshow(
+            np.squeeze(jnp.abs(ys_pred[random_idx] - ys_truth[random_idx])),
+            norm=colors.LogNorm(vmin=1e-4, vmax=maxi),
+            extent=[0, 1, 4, 0],
+            aspect=0.25,
+            cmap="ocean_r",
+        )  # ,
+        axes[i].invert_yaxis()
+        axes[i].set_xlabel("u(x,t)")
+        if i == 0:
+            axes[i].set_ylabel("t")
+        axes[i].set_title("{}".format(labels[i]))
+        fig.colorbar(im, ax=axes[i], orientation="horizontal")
+
+    plt.tight_layout()
+    plt.show()

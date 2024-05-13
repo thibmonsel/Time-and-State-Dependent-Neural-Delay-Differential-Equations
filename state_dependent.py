@@ -13,6 +13,7 @@ from diffrax import Delays
 from jax.lib import xla_bridge
 import numpy as np
 from models import ANODE, fit, NeuralDDEWithTime, NeuralODE, LatentODE, fit_latent
+from utils import dic_act
 
 
 if __name__ == "__main__":
@@ -28,20 +29,6 @@ if __name__ == "__main__":
     parser.add_argument("--augmented_dim", type=int, default=10)
     args = parser.parse_args()
 
-    dic_act = {
-        "relu": jnn.relu,
-        "tanh": jnn.tanh,
-        "softplus": jnn.softplus,
-        "elu": jnn.elu,
-        "sigmoid": jnn.sigmoid,
-        "silu": jnn.silu,
-        "gelu": jnn.gelu,
-        "id": lambda x: x,
-        "swish": jnn.swish,
-        "hard_tanh": jnn.hard_tanh,
-        "lecun_tanh": lambda x: 1.7159 * jnn.tanh(2 / 3 * x),
-        "mish": lambda x: x * jnn.tanh(jnp.log(1 + jnn.sigmoid(x))),
-    }
     augmented_dim = args.augmented_dim
 
     if args.exp_path == "":
@@ -86,7 +73,7 @@ if __name__ == "__main__":
     plt.close()
 
     length_strategy = (1.0,)
-    epoch_strategy = (1000,)
+    epoch_strategy = (1000,) 
     lr_strategy = (1e-3,)
 
     json_filename = "hyper_parameters.json"
