@@ -20,6 +20,7 @@ from models import (
     pde_fit,
     PDENeuralDDE,
 )
+import numpy as np
 
 
 if __name__ == "__main__":
@@ -31,7 +32,7 @@ if __name__ == "__main__":
         help="which model to use",
         choices=["anode", "ode", "dde", "latent_ode"],
     )
-    parser.add_argument("--seed", type=int, default=1234)
+    parser.add_argument("--seed", type=int, default=np.random.randint(0,10000))
     parser.add_argument("--exp_path", default="")
     parser.add_argument("--augmented_dim", type=int, default=10)
     args = parser.parse_args()
@@ -102,13 +103,14 @@ if __name__ == "__main__":
 
     length_strategy = (1.0,)
     epoch_strategy = (500,)
-    lr_strategy = (1e-3,)
+    lr_strategy = (1e-4,)
 
     json_filename = "hyper_parameters.json"
     dic_data = {
         "id": datestring,
         "metadata": {
             "seed": args.seed,
+            "seed_train_test_split" : seed_train_test_split,
             "augmented_dim": augmented_dim,
             "batch_size": batch_size,
             "epoch_strategy": epoch_strategy,
@@ -153,10 +155,10 @@ if __name__ == "__main__":
         os.makedirs(default_dir + "/dde")
         os.makedirs(default_dir + "/dde/training")
         delays = Delays(
-        delays=[lambda t, y, args: 2.0],
-        initial_discontinuities=jnp.array([0.0]),
-        max_discontinuities=2,
-    )
+            delays=[lambda t, y, args: 2.0],
+            initial_discontinuities=jnp.array([0.0]),
+            max_discontinuities=2,
+        )
         model_dde = PDENeuralDDE(
             data_size, width, depth, dic_act[activation], delays, key=model_key
         )

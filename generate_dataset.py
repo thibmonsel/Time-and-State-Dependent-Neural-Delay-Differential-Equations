@@ -13,7 +13,7 @@ from dataset import (
     state_dependent_dataset,
     state_dependent_dataset_different,
     diffusion_delay,
-    check_split_indices
+    check_split_indices,
 )
 
 if __name__ == "__main__":
@@ -221,7 +221,7 @@ if __name__ == "__main__":
             check_split_indices(
                 ys, dataset_size, saving_path, args.nb_split_indices, split_idx_key
             )
-            
+
     if args.dataset == "state_dependent":
         ####### GENERATING STATE DEPENDENT TRAIN/TEST DATASET #######
         if any(file.endswith("ys.npy") for file in os.listdir(saving_path)):

@@ -27,6 +27,13 @@ python generate_dataset.py --dataset=diffusion_delay
 
 # To launch training for experiments :
 
+You must install diffrax locally by : 
+```bash
+cd diffrax/
+pip install . 
+cd ..
+```
+
 To launch the training you must refer the `seed` and the model (e.g. `["anode", "ode", "dde", "latent_ode"]`) used along with the noise level (only for the Time Dependent dataset)
 
 ## For the Time Dependent dataset with a certain noise level : 

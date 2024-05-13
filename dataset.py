@@ -88,9 +88,7 @@ def state_dependent_dataset_different(ts, delays, y0_other_history, ts_history):
             + 1 / (1 + t**2)
         )
         beta = alpha - 4
-        return (
-            -alpha * y + beta * history[0] ** 2 / (1 + history[0] ** 2) + beta
-        )
+        return -alpha * y + beta * history[0] ** 2 / (1 + history[0] ** 2) + beta
 
     def history(t):
         return jnp.array(
@@ -116,6 +114,7 @@ def state_dependent_dataset_different(ts, delays, y0_other_history, ts_history):
     )
 
     return sol.ys
+
 
 def time_dependent_dataset_different(ts, delays, y0_other_history, ts_history):
     def vector_field(t, y, args, *, history):
@@ -147,7 +146,6 @@ def time_dependent_dataset_different(ts, delays, y0_other_history, ts_history):
     return sol.ys
 
 
-
 def dataloader(arrays, batch_size, *, key):
     dataset_size = arrays[0].shape[0]
     assert all(array.shape[0] == dataset_size for array in arrays)
@@ -156,7 +154,6 @@ def dataloader(arrays, batch_size, *, key):
     for batch_nb in range(int(dataset_size // batch_size)):
         batch_perm = perm[batch_nb * batch_size : (batch_nb + 1) * batch_size]
         yield tuple(array[batch_perm] for array in arrays)
-
 
 
 def check_split_indices(ys, trainset_size, saving_path, nb_split_indices, key):

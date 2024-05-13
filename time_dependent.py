@@ -3,6 +3,7 @@ import datetime
 import json
 import os
 import time
+import numpy as np
 
 import jax
 import jax.nn as jnn
@@ -30,8 +31,8 @@ if __name__ == "__main__":
         help="which model to use",
         choices=["anode", "ode", "dde", "latent_ode"],
     )
-    parser.add_argument("--seed", type=int, default=1234)
-    parser.add_argument("--noise_level", type=float, default=0.1)
+    parser.add_argument("--seed", type=int, default=np.random.randint(0,10000))
+    parser.add_argument("--noise_level", type=float, default=2)
     parser.add_argument("--exp_path", default="")
     parser.add_argument("--augmented_dim", type=int, default=10)
     args = parser.parse_args()
@@ -68,7 +69,9 @@ if __name__ == "__main__":
     model_key, view_key = jax.random.split(key, 2)
     seed_train_test_split = os.environ["seed_train_test_split"]
 
-    ys_raw, ts = jnp.load("data/time_dependent/ys_" + str(int(args.noise_level)) + "_noise_level.npy"), jnp.load(
+    ys_raw, ts = jnp.load(
+        "data/time_dependent/ys_" + str(int(args.noise_level)) + "_noise_level.npy"
+    ), jnp.load(
         "data/time_dependent/ts_" + str(int(args.noise_level)) + "_noise_level.npy"
     )
     print("ys.shape, ts.shape", ys_raw.shape, ts.shape)
@@ -80,7 +83,7 @@ if __name__ == "__main__":
     ys = ys_raw[train_idx]
     ystest = ys_raw[test_idx]
     print("ys.shape, ystest.shape", ys.shape, ystest.shape)
-    
+
     batch_size = 256
     width, depth, activation = 64, 3, "relu"
     _, length_size, data_size = ys.shape
@@ -94,7 +97,7 @@ if __name__ == "__main__":
     plt.close()
 
     length_strategy = (1.0,)
-    epoch_strategy = (2000,) 
+    epoch_strategy = (2000,)
     lr_strategy = (1e-3,)
 
     json_filename = "hyper_parameters.json"
@@ -102,6 +105,7 @@ if __name__ == "__main__":
         "id": datestring,
         "metadata": {
             "seed": args.seed,
+            "seed_train_test_split" : seed_train_test_split,
             "augmented_dim": augmented_dim,
             "batch_size": batch_size,
             "epoch_strategy": epoch_strategy,
@@ -146,13 +150,13 @@ if __name__ == "__main__":
         os.makedirs(default_dir + "/dde")
         os.makedirs(default_dir + "/dde/training")
         delays = Delays(
-                delays=[lambda t, y, args: 2 + jnp.sin(t)],
-                initial_discontinuities=jnp.array([0.0]),
-                max_discontinuities=2,
-                recurrent_checking=False,
-                rtol=10e-3,
-                atol=10e-6,
-            )
+            delays=[lambda t, y, args: 2 + jnp.sin(t)],
+            initial_discontinuities=jnp.array([0.0]),
+            max_discontinuities=2,
+            recurrent_checking=False,
+            rtol=10e-3,
+            atol=10e-6,
+        )
         model_dde = NeuralDDE(
             data_size, width, depth, dic_act[activation], delays, key=model_key
         )

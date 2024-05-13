@@ -794,6 +794,7 @@ def fit(
                     rdx_idx = jax.random.randint(view_key, (), 0, dataset_size)
 
                     plt.plot(loss_per_step)
+                    plt.yscale("log")
                     plt.title("Loss curve")
                     plt.xlabel("Steps")
                     plt.savefig(
@@ -806,6 +807,7 @@ def fit(
                     plt.close()
 
                     plt.plot(test_loss)
+                    plt.yscale("log")
                     plt.title("Test Loss curve")
                     plt.xlabel("Steps")
                     plt.savefig(
