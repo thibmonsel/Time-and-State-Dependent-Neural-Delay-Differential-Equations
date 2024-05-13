@@ -12,11 +12,11 @@ from dataset import diffusion_delay
 from diffrax import Delays
 from jax.lib import xla_bridge
 from models import (
-    ANODE,
+    PDEANODE,
     fit,
     fit_latent,
     LatentODE,
-    NeuralODE,
+    PDENeuralODE,
     pde_fit,
     PDENeuralDDE,
 )
@@ -131,16 +131,20 @@ if __name__ == "__main__":
 
     ##### Neural ODE #######
     if args.model == "ode":
+        print("TRAINING ODE")
         os.makedirs(default_dir + "/ode")
         os.makedirs(default_dir + "/ode/training")
-        model_ode = NeuralODE(
+        model_ode = PDENeuralODE(
             data_size, width, depth, dic_act[activation], key=model_key
         )
 
-        loss_per_step = fit(
+        loss_per_step =  pde_fit(
             ts,
+            xs,
             ys,
             ystest,
+            a_sample,
+            a_sample_test,
             model_ode,
             batch_size,
             default_dir,
@@ -151,6 +155,7 @@ if __name__ == "__main__":
         )
 
     if args.model == "dde":
+        print("TRAINING DDE")
         ##### Neural DDE #######
         os.makedirs(default_dir + "/dde")
         os.makedirs(default_dir + "/dde/training")
@@ -179,21 +184,25 @@ if __name__ == "__main__":
         )
 
     if args.model == "anode":
+        print("TRAINING ANODE")
         ##### Neural ANODE #######
         os.makedirs(default_dir + "/anode")
         os.makedirs(default_dir + "/anode/training")
-        model_anode = ANODE(
+        model_anode = PDEANODE(
             data_size,
-            augmented_dim,
+            data_size,
             width,
             depth,
             dic_act[activation],
             key=model_key,
         )
-        loss_per_step3 = fit(
+        loss_per_step3 = pde_fit(
             ts,
+            xs,
             ys,
             ystest,
+            a_sample,
+            a_sample_test,
             model_anode,
             batch_size,
             default_dir,
@@ -204,6 +213,7 @@ if __name__ == "__main__":
         )
 
     if args.model == "latent_ode":
+        print("TRAINING Latent ODE")
         ##### Latent ODE #######
         os.makedirs(default_dir + "/latent_ode")
         os.makedirs(default_dir + "/latent_ode/training")

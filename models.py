@@ -20,215 +20,7 @@ name_dic = {
     "Warm_Up_ANODE": "warmup_anode",
 }
 
-######## STATE DEPENDENT MODEL ########
-
-class Func_Time(eqx.Module):
-    mlp: eqx.nn.MLP
-
-    def __init__(self, nb_delays, data_size, width_size, depth, activation, *, key, **kwargs):
-        super().__init__(**kwargs)
-        self.mlp = eqx.nn.MLP(
-            in_size=(nb_delays + 1) * data_size + 1,
-            out_size=data_size,
-            width_size=width_size,
-            depth=depth,
-            activation=activation,
-            key=key,
-        )
-
-    def __call__(self, t, y, args, *, history):
-        return self.mlp(jnp.hstack([y, *history, t]))
-
-
-class NeuralDDEWithTime(eqx.Module):
-    func: Func_Time
-    delays: Delays
-
-    def __init__(
-        self, data_size, width_size, depth, activation, delays, *, key, **kwargs
-    ):
-        super().__init__(**kwargs)
-        self.func = Func_Time(len(delays.delays), data_size, width_size, depth, activation, key=key)
-        self.delays = delays
-
-    def __name__(self):
-        return "NeuralDDE"
-
-    def __call__(self, ts, y0):
-        solution = diffrax.diffeqsolve(
-            diffrax.ODETerm(self.func),
-            diffrax.Tsit5(),
-            t0=ts[0],
-            t1=ts[-1],
-            dt0=ts[1] - ts[0],
-            y0=lambda t: y0,
-            stepsize_controller=diffrax.PIDController(rtol=1e-6, atol=1e-9),
-            max_steps=2**9,
-            saveat=diffrax.SaveAt(ts=ts, dense=True),
-            delays=self.delays,
-            made_jump=True,
-        )
-        return solution.ys, solution.stats["num_steps"]
-
-
-######## TIME DEPENDENT MODEL ########
-
-
-class Func(eqx.Module):
-    mlp: eqx.nn.MLP
-
-    def __init__(self, nb_delays, data_size, width_size, depth, activation, *, key, **kwargs):
-        super().__init__(**kwargs)
-        self.mlp = eqx.nn.MLP(
-            in_size= (nb_delays+1) * data_size,
-            out_size=data_size,
-            width_size=width_size,
-            depth=depth,
-            activation=activation,
-            key=key,
-        )
-
-    def __call__(self, t, y, args, *, history):
-        return self.mlp(jnp.hstack([y, *history]))
-
-class NeuralDDE(eqx.Module):
-    func: Func
-    delays: Delays
-
-    def __init__(
-        self, data_size, width_size, depth, activation, delays, *, key, **kwargs
-    ):
-        super().__init__(**kwargs)
-        self.func = Func(len(delays.delays), data_size, width_size, depth, activation, key=key)
-        self.delays = delays
-
-    def __name__(self):
-        return "NeuralDDE"
-
-    def __call__(self, ts, y0):
-        solution = diffrax.diffeqsolve(
-            diffrax.ODETerm(self.func),
-            diffrax.Bosh3(),
-            t0=ts[0],
-            t1=ts[-1],
-            dt0=ts[1] - ts[0],
-            y0=lambda t: y0,
-            stepsize_controller=diffrax.PIDController(rtol=1e-6, atol=1e-9),
-            max_steps=500,
-            saveat=diffrax.SaveAt(ts=ts, dense=True),
-            delays=self.delays,
-            made_jump=True,
-        )
-        return solution.ys, solution.stats["num_steps"]
-
-
-######## DIFFUSION MODEL MODEL ########
-
-class PDENeuralDDE(eqx.Module):
-    func: Func
-    delays: Delays
-    def __init__(
-        self, data_size, width_size, depth, activation, delays, *, key, **kwargs
-    ):
-        super().__init__(**kwargs)
-        self.func = Func(len(delays.delays), data_size, width_size, depth, activation, key=key)
-        self.delays = delays
-
-    def __name__(self):
-        return "NeuralDDE"
-
-    def __call__(self, ts, xs, a_sample):
-
-        fn_u0_x = lambda x: jnp.sin(jnp.pi * x)
-        fn_u0_t = lambda u0_x, t: a_sample * jnp.exp(-t) * u0_x
-        u0 = fn_u0_x(xs)
-        fn_u0_partial = functools.partial(fn_u0_t, u0)
-
-        solution = diffrax.diffeqsolve(
-            diffrax.ODETerm(self.func),
-            diffrax.Dopri5(),
-            t0=ts[0],
-            t1=ts[-1],
-            dt0=ts[1] - ts[0],
-            y0=lambda t: fn_u0_partial(t),
-            stepsize_controller=diffrax.PIDController(rtol=1e-6, atol=1e-6),
-            max_steps=200,
-            saveat=diffrax.SaveAt(ts=ts, dense=True),
-            delays=self.delays,
-            made_jump=True,
-        )
-        return solution.ys
-
-#### OTHERS #####
-
-class Func2(eqx.Module):
-    mlp: eqx.nn.MLP
-    # 2 delays
-    def __init__(self, data_size, width_size, depth, activation, *, key, **kwargs):
-        super().__init__(**kwargs)
-        self.mlp = eqx.nn.MLP(
-            in_size=3 * data_size,
-            out_size=data_size,
-            width_size=width_size,
-            depth=depth,
-            activation=activation,
-            key=key,
-        )
-
-    def __call__(self, t, y, args, *, history):
-        return self.mlp(jnp.hstack([y, history[0], history[1]]))
-
-
-class Func3Delays(eqx.Module):
-    mlp: eqx.nn.MLP
-
-    def __init__(self, data_size, width_size, depth, activation, *, key, **kwargs):
-        super().__init__(**kwargs)
-        self.mlp = eqx.nn.MLP(
-            in_size=4 * data_size,
-            out_size=data_size,
-            width_size=width_size,
-            depth=depth,
-            activation=activation,
-            key=key,
-        )
-
-    def __call__(self, t, y, args, *, history):
-        return self.mlp(jnp.hstack([y, history[0], history[1], history[2]]))
-
-
-class NeuralDDE3(eqx.Module):
-    func: Func3Delays
-    delays: Delays
-
-    def __init__(
-        self, data_size, width_size, depth, activation, delays, *, key, **kwargs
-    ):
-        super().__init__(**kwargs)
-        self.func = Func3Delays(data_size, width_size, depth, activation, key=key)
-        self.delays = delays
-
-    def __name__(self):
-        return "NeuralDDE"
-
-    def __call__(self, ts, y0):
-
-        solution = diffrax.diffeqsolve(
-            diffrax.ODETerm(self.func),
-            diffrax.Tsit5(),
-            t0=ts[0],
-            t1=ts[-1],
-            dt0=ts[1] - ts[0],
-            y0=y0,
-            y0_history=lambda t: y0,
-            stepsize_controller=diffrax.PIDController(rtol=1e-6, atol=1e-9),
-            saveat=diffrax.SaveAt(ts=ts, dense=True),
-            delays=self.delays,
-            made_jump=True,
-        )
-        return solution.ys, solution.stats["num_steps"]
-
-
+##### NODE ######
 class Func3(eqx.Module):
     mlp: eqx.nn.MLP
 
@@ -242,10 +34,35 @@ class Func3(eqx.Module):
             activation=activation,
             key=key,
         )
-
-    def __call__(self, t, y, args):
+    
+    def __call__(self, t,y,args):
         return self.mlp(y)
+    
+class NeuralODE(eqx.Module):
+    func: Func3
 
+    def __init__(self, data_size, width_size, depth, activation, *, key, **kwargs):
+        super().__init__(**kwargs)
+        self.func = Func3(data_size, width_size, depth, activation, key=key)
+
+    def __name__(self):
+        return "NeuralODE"
+
+    def __call__(self, ts, y0):
+        solution = diffrax.diffeqsolve(
+            diffrax.ODETerm(self.func),
+            diffrax.Tsit5(),
+            t0=ts[0],
+            t1=ts[-1],
+            dt0=ts[1] - ts[0],
+            y0=y0,
+            stepsize_controller=diffrax.PIDController(rtol=1e-6, atol=1e-9),
+            saveat=diffrax.SaveAt(ts=ts, dense=True),
+        )
+        return solution.ys, solution.stats["num_steps"]
+
+
+####### ANODE ###### 
 
 class LinearLayer(eqx.Module):
     mlp: eqx.nn.Linear
@@ -258,243 +75,7 @@ class LinearLayer(eqx.Module):
 
     def __call__(self, y):
         return self.mlp(jnp.hstack([y]))
-
-
-
-
-class NeuralDDEWithTimeModif(eqx.Module):
-    func: Func_Time
-    delays: Delays
-    # 1 delays
-    def __init__(
-        self, data_size, width_size, depth, activation, delays, *, key, **kwargs
-    ):
-        super().__init__(**kwargs)
-        self.func = Func_Time(data_size, width_size, depth, activation, key=key)
-        self.delays = delays
-
-    def __name__(self):
-        return "NeuralDDE"
-
-    def __call__(self, ts, y0_other_history, ts_history):
-        def history(t):
-            return jnp.array(
-                [
-                    jax.lax.cond(
-                        t > ts_history[0],
-                        lambda: y0_other_history[0],
-                        lambda: y0_other_history[1],
-                    )
-                ]
-            )
-
-        solution = diffrax.diffeqsolve(
-            diffrax.ODETerm(self.func),
-            diffrax.Tsit5(),
-            t0=ts[0],
-            t1=ts[-1],
-            dt0=ts[1] - ts[0],
-            y0=history(ts[0]),
-            y0_history=lambda t: history(t),
-            stepsize_controller=diffrax.PIDController(rtol=1e-6, atol=1e-9),
-            max_steps=2**9,
-            saveat=diffrax.SaveAt(ts=ts, dense=True),
-            delays=self.delays,
-            made_jump=True,
-        )
-        return solution.ys, solution.stats["num_steps"]
-
-
-
-
-
-
-class NeuralDDE2(eqx.Module):
-    func: Func2
-    delays: Delays
-
-    def __init__(
-        self, data_size, width_size, depth, activation, delays, *, key, **kwargs
-    ):
-        super().__init__(**kwargs)
-        self.func = Func2(data_size, width_size, depth, activation, key=key)
-        self.delays = delays
-
-    def __name__(self):
-        return "NeuralDDE"
-
-    def __call__(self, ts, y0):
-
-        solution = diffrax.diffeqsolve(
-            diffrax.ODETerm(self.func),
-            diffrax.Tsit5(),
-            t0=ts[0],
-            t1=ts[-1],
-            dt0=ts[1] - ts[0],
-            y0=y0,
-            y0_history=lambda t: y0,
-            stepsize_controller=diffrax.PIDController(rtol=1e-6, atol=1e-9),
-            saveat=diffrax.SaveAt(ts=ts, dense=True),
-            delays=self.delays,
-            made_jump=True,
-        )
-        return solution.ys, solution.stats["num_steps"]
-
-
-class NeuralDDE2_Modif(eqx.Module):
-    func: Func2
-    delays: Delays
-
-    def __init__(
-        self, data_size, width_size, depth, activation, delays, *, key, **kwargs
-    ):
-        super().__init__(**kwargs)
-        self.func = Func2(data_size, width_size, depth, activation, key=key)
-        self.delays = delays
-
-    def __name__(self):
-        return "NeuralDDE"
-
-    def __call__(self, ts, y0_other_history, ts_history):
-        def history(t):
-            switch = jnp.where(
-                t > ts_history.min(), 0, jnp.where(t > ts_history.max(), 1, 2)
-            )
-
-            return jnp.array(
-                [
-                    jax.lax.switch(
-                        switch,
-                        [
-                            lambda: y0_other_history[0],
-                            lambda: y0_other_history[1],
-                            lambda: y0_other_history[2],
-                        ],
-                    )
-                ]
-            )
-
-        solution = diffrax.diffeqsolve(
-            diffrax.ODETerm(self.func),
-            diffrax.Tsit5(),
-            t0=ts[0],
-            t1=ts[-1],
-            dt0=ts[1] - ts[0],
-            y0=history(ts[0]),
-            y0_history=lambda t: history(t),
-            stepsize_controller=diffrax.PIDController(rtol=1e-6, atol=1e-9),
-            saveat=diffrax.SaveAt(ts=ts, dense=True),
-            delays=self.delays,
-            made_jump=True,
-        )
-        return solution.ys, solution.stats["num_steps"]
-
-
-
-
-
-class Func6_Time(eqx.Module):
-    mlp: eqx.nn.MLP
-    # 1 delays
-    def __init__(self, data_size, width_size, depth, activation, *, key, **kwargs):
-        super().__init__(**kwargs)
-        self.mlp = eqx.nn.MLP(
-            in_size=5 * data_size + 1,
-            out_size=data_size,
-            width_size=width_size,
-            depth=depth,
-            activation=activation,
-            key=key,
-        )
-
-    def __call__(self, t, y, args, *, history):
-        return self.mlp(jnp.hstack([y, *history, t]))
-
-
-class NeuralDDE6WithTime(eqx.Module):
-    func: Func6_Time
-    delays: Delays
-    # 1 delays
-    def __init__(
-        self, data_size, width_size, depth, activation, delays, *, key, **kwargs
-    ):
-        super().__init__(**kwargs)
-        self.func = Func6_Time(data_size, width_size, depth, activation, key=key)
-        self.delays = delays
-
-    def __name__(self):
-        return "NeuralDDE"
-
-    def __call__(self, ts, y0):
-        solution = diffrax.diffeqsolve(
-            diffrax.ODETerm(self.func),
-            diffrax.Tsit5(),
-            t0=ts[0],
-            t1=ts[-1],
-            dt0=ts[1] - ts[0],
-            y0=y0,
-            y0_history=lambda t: y0,
-            stepsize_controller=diffrax.PIDController(rtol=1e-6, atol=1e-9),
-            max_steps=2**9,
-            saveat=diffrax.SaveAt(ts=ts, dense=True),
-            delays=self.delays,
-            made_jump=True,
-        )
-        return solution.ys, solution.stats["num_steps"]
-
-
-
-
-class NeuralDDE_Modif(eqx.Module):
-    func: Func
-    delays: Delays
-
-    def __init__(
-        self, data_size, width_size, depth, activation, delays, *, key, **kwargs
-    ):
-        super().__init__(**kwargs)
-        self.func = Func(data_size, width_size, depth, activation, key=key)
-        self.delays = delays
-
-    def __name__(self):
-        return "NeuralDDE"
-
-    def __call__(self, ts, y0_other_history, ts_history):
-        def history(t):
-            if y0_other_history[0].size > 1:
-                return jax.lax.cond(
-                    t > ts_history[0],
-                    lambda: y0_other_history[0],
-                    lambda: y0_other_history[1],
-                )
-            else:
-                return jnp.array(
-                    [
-                        jax.lax.cond(
-                            t > ts_history[0],
-                            lambda: y0_other_history[0],
-                            lambda: y0_other_history[1],
-                        )
-                    ]
-                )
-
-        solution = diffrax.diffeqsolve(
-            diffrax.ODETerm(self.func),
-            diffrax.Dopri5(),
-            t0=ts[0],
-            t1=ts[-1],
-            dt0=ts[1] - ts[0],
-            y0=history(ts[0]),
-            y0_history=lambda t: history(t),
-            stepsize_controller=diffrax.PIDController(rtol=1e-6, atol=1e-9),
-            max_steps=2**10,
-            saveat=diffrax.SaveAt(ts=ts, dense=True),
-            delays=self.delays,
-            made_jump=True,
-        )
-        return solution.ys, solution.stats["num_steps"]
-
-
+    
 class ANODE(eqx.Module):
     func: Func3
     linear: LinearLayer
@@ -539,29 +120,8 @@ class ANODE(eqx.Module):
         )
 
 
-class NeuralODE(eqx.Module):
-    func: Func3
 
-    def __init__(self, data_size, width_size, depth, activation, *, key, **kwargs):
-        super().__init__(**kwargs)
-        self.func = Func3(data_size, width_size, depth, activation, key=key)
-
-    def __name__(self):
-        return "NeuralODE"
-
-    def __call__(self, ts, y0):
-        solution = diffrax.diffeqsolve(
-            diffrax.ODETerm(self.func),
-            diffrax.Tsit5(),
-            t0=ts[0],
-            t1=ts[-1],
-            dt0=ts[1] - ts[0],
-            y0=y0,
-            stepsize_controller=diffrax.PIDController(rtol=1e-6, atol=1e-9),
-            saveat=diffrax.SaveAt(ts=ts, dense=True),
-        )
-        return solution.ys, solution.stats["num_steps"]
-
+#### LATENT ODE ##### 
 
 class FuncLatent(eqx.Module):
     scale: jnp.ndarray
@@ -685,6 +245,305 @@ class LatentODE(eqx.Module):
         return self._sample(ts, latent), stats
 
 
+
+######## STATE DEPENDENT MODEL ########
+
+class Func_Time(eqx.Module):
+    mlp: eqx.nn.MLP
+
+    def __init__(self, nb_delays, data_size, width_size, depth, activation, *, key, **kwargs):
+        super().__init__(**kwargs)
+        self.mlp = eqx.nn.MLP(
+            in_size=(nb_delays + 1) * data_size + 1,
+            out_size=data_size,
+            width_size=width_size,
+            depth=depth,
+            activation=activation,
+            key=key,
+        )
+
+    def __call__(self, t, y, args, *, history):
+        return self.mlp(jnp.hstack([y, *history, t]))
+
+
+class NeuralDDEWithTime(eqx.Module):
+    func: Func_Time
+    delays: Delays
+
+    def __init__(
+        self, data_size, width_size, depth, activation, delays, *, key, **kwargs
+    ):
+        super().__init__(**kwargs)
+        self.func = Func_Time(len(delays.delays), data_size, width_size, depth, activation, key=key)
+        self.delays = delays
+
+    def __name__(self):
+        return "NeuralDDE"
+
+    def __call__(self, ts, y0):
+        solution = diffrax.diffeqsolve(
+            diffrax.ODETerm(self.func),
+            diffrax.Tsit5(),
+            t0=ts[0],
+            t1=ts[-1],
+            dt0=ts[1] - ts[0],
+            y0=lambda t: y0,
+            stepsize_controller=diffrax.PIDController(rtol=1e-6, atol=1e-9),
+            max_steps=2**9,
+            saveat=diffrax.SaveAt(ts=ts, dense=True),
+            delays=self.delays,
+            made_jump=True,
+        )
+        return solution.ys, solution.stats["num_steps"]
+
+
+######## TIME DEPENDENT MODEL ########
+
+class Func(eqx.Module):
+    mlp: eqx.nn.MLP
+
+    def __init__(self, nb_delays, data_size, width_size, depth, activation, *, key, **kwargs):
+        super().__init__(**kwargs)
+        self.mlp = eqx.nn.MLP(
+            in_size= (nb_delays+1) * data_size,
+            out_size=data_size,
+            width_size=width_size,
+            depth=depth,
+            activation=activation,
+            key=key,
+        )
+
+    def __call__(self, t, y, args, *, history):
+        return self.mlp(jnp.hstack([y, *history]))
+
+class NeuralDDE(eqx.Module):
+    func: Func
+    delays: Delays
+
+    def __init__(
+        self, data_size, width_size, depth, activation, delays, *, key, **kwargs
+    ):
+        super().__init__(**kwargs)
+        self.func = Func(len(delays.delays), data_size, width_size, depth, activation, key=key)
+        self.delays = delays
+
+    def __name__(self):
+        return "NeuralDDE"
+
+    def __call__(self, ts, y0):
+        solution = diffrax.diffeqsolve(
+            diffrax.ODETerm(self.func),
+            diffrax.Bosh3(),
+            t0=ts[0],
+            t1=ts[-1],
+            dt0=ts[1] - ts[0],
+            y0=lambda t: y0,
+            stepsize_controller=diffrax.PIDController(rtol=1e-6, atol=1e-9),
+            max_steps=500,
+            saveat=diffrax.SaveAt(ts=ts, dense=True),
+            delays=self.delays,
+            made_jump=True,
+        )
+        return solution.ys, solution.stats["num_steps"]
+
+
+######## DIFFUSION MODEL MODEL ########
+
+class PDENeuralDDE(eqx.Module):
+    func: Func
+    delays: Delays
+    def __init__(
+        self, data_size, width_size, depth, activation, delays, *, key, **kwargs
+    ):
+        super().__init__(**kwargs)
+        self.func = Func(len(delays.delays), data_size, width_size, depth, activation, key=key)
+        self.delays = delays
+
+    def __name__(self):
+        return "NeuralDDE"
+
+    def __call__(self, ts, xs, a_sample):
+
+        fn_u0_x = lambda x: jnp.sin(jnp.pi * x)
+        fn_u0_t = lambda u0_x, t: a_sample * jnp.exp(-t) * u0_x
+        u0 = fn_u0_x(xs)
+        fn_u0_partial = functools.partial(fn_u0_t, u0)
+
+        solution = diffrax.diffeqsolve(
+            diffrax.ODETerm(self.func),
+            diffrax.Dopri5(),
+            t0=ts[0],
+            t1=ts[-1],
+            dt0=ts[1] - ts[0],
+            y0=lambda t: fn_u0_partial(t),
+            stepsize_controller=diffrax.PIDController(rtol=1e-6, atol=1e-6),
+            max_steps=200,
+            saveat=diffrax.SaveAt(ts=ts, dense=True),
+            delays=self.delays,
+            made_jump=True,
+        )
+        return solution.ys
+
+class PDEANODE(eqx.Module):
+    augmented_dim: int
+    func: Func3
+
+    def __init__(self, augmented_dim, data_size, width_size, depth, activation,*,key,**kwargs):
+        super().__init__(**kwargs)
+        self.func = Func3(augmented_dim + data_size, width_size, depth, activation, key=key)
+        self.augmented_dim = augmented_dim
+        
+    def __name__(self):
+        return "ANODE"
+
+    def __call__(self, ts, xs, a_sample):
+        fn_u0_x = lambda x: jnp.sin(jnp.pi * x)
+        fn_u0_t = lambda u0_x, t: a_sample * jnp.exp(-0.1*t) * u0_x
+        u0 = fn_u0_x(xs)
+        fn_u0_partial = functools.partial(fn_u0_t, u0)
+        y0 = jnp.concatenate(
+            (fn_u0_partial(ts[0]), jnp.zeros((self.augmented_dim,))),
+            axis=-1,
+        )
+        solution = diffrax.diffeqsolve(
+            diffrax.ODETerm(self.func),
+            diffrax.Bosh3(),
+            t0=ts[0],
+            t1=ts[-1],
+            dt0=ts[1] - ts[0],
+            y0=y0,
+            stepsize_controller=diffrax.PIDController(rtol=1e-6, atol=1e-3),
+            saveat=diffrax.SaveAt(ts=ts, dense=True),
+        )
+        return solution.ys[:, : -self.augmented_dim] 
+
+
+class PDENeuralODE(eqx.Module):
+    func: Func3
+
+    def __init__(
+        self,data_size, width_size, depth, activation, key, **kwargs
+    ):
+        super().__init__(**kwargs)
+        self.func = Func3(data_size, width_size, depth, activation, key=key)
+
+    def __name__(self):
+        return "NeuralODE"
+
+    def __call__(self, ts, xs, a_sample):
+        fn_u0_x = lambda x: jnp.sin(jnp.pi * x)
+        fn_u0_t = lambda u0_x, t: a_sample * jnp.exp(-0.1*t) * u0_x
+        u0 = fn_u0_x(xs)
+        fn_u0_partial = functools.partial(fn_u0_t, u0)
+        solution = diffrax.diffeqsolve(
+            diffrax.ODETerm(self.func),
+            diffrax.Bosh3(),
+            t0=ts[0],
+            t1=ts[-1],
+            dt0=ts[1] - ts[0],
+            y0=fn_u0_partial(ts[0]),
+            stepsize_controller=diffrax.PIDController(rtol=1e-3, atol=1e-6),
+            saveat=diffrax.SaveAt(ts=ts, dense=True),
+        )
+        return solution.ys
+
+
+
+#### OTHER STEP HISTORY FN STATE DEPENDENT ####
+
+class NeuralDDEWithTimeModif(eqx.Module):
+    func: Func_Time
+    delays: Delays
+
+    def __init__(
+        self, data_size, width_size, depth, activation, delays, *, key, **kwargs
+    ):
+        super().__init__(**kwargs)
+        self.func = Func_Time(data_size, width_size, depth, activation, key=key)
+        self.delays = delays
+
+    def __name__(self):
+        return "NeuralDDE"
+
+    def __call__(self, ts, y0_other_history, ts_history):
+        def history(t):
+            return jnp.array(
+                [
+                    jax.lax.cond(
+                        t > ts_history[0],
+                        lambda: y0_other_history[0],
+                        lambda: y0_other_history[1],
+                    )
+                ]
+            )
+
+        solution = diffrax.diffeqsolve(
+            diffrax.ODETerm(self.func),
+            diffrax.Tsit5(),
+            t0=ts[0],
+            t1=ts[-1],
+            dt0=ts[1] - ts[0],
+            y0=history(ts[0]),
+            y0_history=lambda t: history(t),
+            stepsize_controller=diffrax.PIDController(rtol=1e-6, atol=1e-9),
+            max_steps=2**9,
+            saveat=diffrax.SaveAt(ts=ts, dense=True),
+            delays=self.delays,
+            made_jump=True,
+        )
+        return solution.ys, solution.stats["num_steps"]
+
+#### OTHER STEP HISTORY FN TIME DEPENDENT ####
+
+class NeuralDDE_Modif(eqx.Module):
+    func: Func
+    delays: Delays
+
+    def __init__(
+        self, data_size, width_size, depth, activation, delays, *, key, **kwargs
+    ):
+        super().__init__(**kwargs)
+        self.func = Func(data_size, width_size, depth, activation, key=key)
+        self.delays = delays
+
+    def __name__(self):
+        return "NeuralDDE"
+
+    def __call__(self, ts, y0_other_history, ts_history):
+        def history(t):
+            if y0_other_history[0].size > 1:
+                return jax.lax.cond(
+                    t > ts_history[0],
+                    lambda: y0_other_history[0],
+                    lambda: y0_other_history[1],
+                )
+            else:
+                return jnp.array(
+                    [
+                        jax.lax.cond(
+                            t > ts_history[0],
+                            lambda: y0_other_history[0],
+                            lambda: y0_other_history[1],
+                        )
+                    ]
+                )
+
+        solution = diffrax.diffeqsolve(
+            diffrax.ODETerm(self.func),
+            diffrax.Dopri5(),
+            t0=ts[0],
+            t1=ts[-1],
+            dt0=ts[1] - ts[0],
+            y0=history(ts[0]),
+            y0_history=lambda t: history(t),
+            stepsize_controller=diffrax.PIDController(rtol=1e-6, atol=1e-9),
+            max_steps=2**10,
+            saveat=diffrax.SaveAt(ts=ts, dense=True),
+            delays=self.delays,
+            made_jump=True,
+        )
+        return solution.ys, solution.stats["num_steps"]
+    
 @eqx.filter_value_and_grad(has_aux=True)
 def grad_loss(model, ti, yi):
     if model.__name__() == "ANODE":
@@ -709,16 +568,8 @@ def make_step(ti, yi, model, opt_state, optim):
 
 @eqx.filter_value_and_grad
 def pde_grad_loss(model, ts, xs, a_sample, ys):
-    if model.__name__() == "ANODE":
-        y0 = jnp.concatenate(
-            (ys[:, 0], jnp.zeros((ys[:, 0].shape[0], model.augmented_dim))),
-            axis=-1,
-        )
-        y_pred = jax.vmap(model, (None, None, 0))(ts, y0)
-        return jnp.mean((ys - y_pred) ** 2)
-    else:
-        y_pred = jax.vmap(model, (None, None, 0))(ts, xs, a_sample)
-        return jnp.mean((ys - y_pred) ** 2)
+    y_pred = jax.vmap(model, (None, None, 0))(ts, xs, a_sample)
+    return jnp.mean((ys - y_pred) ** 2)
 
 
 @eqx.filter_jit
@@ -960,6 +811,7 @@ def pde_fit(
                     rdx_idx = jax.random.randint(view_key, (), 0, dataset_size)
 
                     plt.plot(loss_per_step)
+                    plt.yscale("log")
                     plt.title("Loss curve")
                     plt.xlabel("Steps")
                     plt.savefig(
@@ -972,6 +824,7 @@ def pde_fit(
                     plt.close()
 
                     plt.plot(test_loss)
+                    plt.yscale("log")
                     plt.title("Test Loss curve")
                     plt.xlabel("Steps")
                     plt.savefig(

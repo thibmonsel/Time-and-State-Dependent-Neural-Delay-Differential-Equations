@@ -11,7 +11,7 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 import numpy.random as random
-from models import NeuralDDEWithTime, NeuralDDE, ANODE, NeuralODE, LatentODE
+from models import NeuralDDEWithTime, PDENeuralDDE,NeuralDDE, ANODE, NeuralODE, LatentODE
 from utils import plot_subplots, plot_phase_space_subplots, predict
 
 
@@ -70,7 +70,7 @@ if __name__ == "__main__":
         with open(dde_path + "/" +  dde_runs[0] + "/hyper_parameters.json") as json_file:
             hyperparams = json.load(json_file)[0]["metadata"]
 
-        model_dde = NeuralDDE(
+        model_dde = NeuralDDEWithTime(
             data_size,
             hyperparams["width"],
             hyperparams["depth"],
@@ -246,7 +246,111 @@ if __name__ == "__main__":
             ys_extrapolate,
         )
 
-        ypred_laplace = jnp.load("results/" + str(args.dataset) + "/split_index_5/ys_test_pred.npy")
+        ypred_laplace = jnp.load("results/" + str(args.dataset) + "/split_index_1/ys_test_pred.npy")
+        
+        for i in range(10):
+            plot_subplots(
+                nb_plots,
+                ts,
+                ypred_ode,
+                anode_ypred,
+                ypred_dde,
+                ypred_latent,
+                ypred_laplace,
+                ys_extrapolate,
+            )
+
+    if args.dataset == "diffusion_delay":
+        nb_plots = 4
+        delays = Delays(
+            delays=[lambda t, y, args: 2.0],
+            initial_discontinuities=jnp.array([0.0]),
+            max_discontinuities=2,
+        )
+        ####### LOADING TEST DATASET #######
+        seed_train_test_split = 1
+        ys_extrapolate, ts = jnp.load("data/diffusion_delay/ys_extrapolate.npy"), jnp.load(
+            "data/diffusion_delay/ts.npy"
+        )
+        data_size = ys_extrapolate.shape[-1]
+        #### LOADING TRAINED DDE MODEL ####
+        with open(dde_path + "/" +  dde_runs[0] + "/hyper_parameters.json") as json_file:
+            hyperparams = json.load(json_file)[0]["metadata"]
+
+        model_dde = PDENeuralDDE(
+            data_size,
+            hyperparams["width"],
+            hyperparams["depth"],
+            dic_act[hyperparams["activation"]],
+            delays,
+            key=key,
+        )
+
+        model_dde_loaded = eqx.tree_deserialise_leaves(
+            dde_path + "/" +  dde_runs[0] + "/dde/last.eqx", model_dde
+        )
+
+        #### LOADING TRAINED ANODE MODEL ####
+        with open(anode_path + "/"+ anode_runs[0] + "/hyper_parameters.json") as json_file:
+            hyperparams = json.load(json_file)[0]["metadata"]
+
+        anode = ANODE(
+            data_size,
+            hyperparams["augmented_dim"],
+            hyperparams["width"],
+            hyperparams["depth"],
+            dic_act[hyperparams["activation"]],
+            key=key,
+        )
+        anode_loaded = eqx.tree_deserialise_leaves(
+            anode_path + "/"+ anode_runs[0] + "/anode/last.eqx", anode
+        )
+
+        #### LOADING TRAINED NODE MODEL ####
+        with open(ode_path + "/" + ode_runs[0] + "/hyper_parameters.json") as json_file:
+            hyperparams = json.load(json_file)[0]["metadata"]
+
+        model_ode = NeuralODE(
+            data_size,
+            hyperparams["width"],
+            hyperparams["depth"],
+            dic_act[hyperparams["activation"]],
+            key=key,
+        )
+
+        model_ode_loaded = eqx.tree_deserialise_leaves(
+            ode_path + "/" +  ode_runs[0] + "/ode/last.eqx", model_ode
+        )
+
+        #### LOADING TRAINED LATENT ODE MODEL ####
+        with open(latent_ode_path + "/" +  latent_ode_runs[0] + "/hyper_parameters.json") as json_file:
+            hyperparams = json.load(json_file)[0]["metadata"]
+
+        latent_ode = LatentODE(
+            data_size,
+            hyperparams["width"],
+            hyperparams["width"],
+            hyperparams["width"],
+            hyperparams["depth"],
+            key=key,
+        )
+
+        latent_ode_loaded = eqx.tree_deserialise_leaves(
+            latent_ode_path + "/" +  latent_ode_runs[0] + "/latent_ode/last.eqx", latent_ode
+        )
+
+        ###### PREDICTION TEST DATASET ##########
+        ypred_ode, anode_ypred, ypred_dde, ypred_latent = predict(
+            model_ode_loaded,
+            model_dde_loaded,
+            anode_loaded,
+            latent_ode_loaded,
+            key,
+            ts,
+            ys_extrapolate,
+        )
+
+        ypred_laplace = jnp.load("results/" + str(args.dataset) + "/split_index_1/ys_test_pred.npy")
         
         for i in range(10):
             plot_subplots(
