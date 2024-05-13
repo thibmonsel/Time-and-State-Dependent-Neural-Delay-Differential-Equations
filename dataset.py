@@ -61,7 +61,7 @@ def diffusion_delay(ts, xs, delays, a_sample):
 
     D, r = 0.01, 0.9
     fn_u0_x = lambda x: jnp.sin(jnp.pi * x)
-    fn_u0_t = lambda u0_x, t: a_sample * jnp.exp(-0.01 * t) * u0_x
+    fn_u0_t = lambda u0_x, t: a_sample * jnp.exp(-0.1 * t) * u0_x
     u0 = fn_u0_x(xs)
     fn_u0_partial = functools.partial(fn_u0_t, u0)
     sol = diffrax.diffeqsolve(

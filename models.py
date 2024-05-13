@@ -364,7 +364,7 @@ class PDENeuralDDE(eqx.Module):
     def __call__(self, ts, xs, a_sample):
 
         fn_u0_x = lambda x: jnp.sin(jnp.pi * x)
-        fn_u0_t = lambda u0_x, t: a_sample * jnp.exp(-t) * u0_x
+        fn_u0_t = lambda u0_x, t: a_sample * jnp.exp(-0.1*t) * u0_x
         u0 = fn_u0_x(xs)
         fn_u0_partial = functools.partial(fn_u0_t, u0)
 
