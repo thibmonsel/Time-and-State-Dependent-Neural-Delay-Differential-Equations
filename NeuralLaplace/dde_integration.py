@@ -14,7 +14,7 @@ from torchlaplace.core import laplace_reconstruct
 from torchlaplace.data_utils import basic_collate_fn
 
 normalize_dataset = True
-batch_size = 128 * 2 # 32 
+batch_size =  128 * 2 
 extrapolate = True
 latent_dim = 2
 hidden_units = 64
@@ -229,8 +229,9 @@ def get_other_history_fn_dataset(name, device):
 
 noise_level = 0
 name_dataset = "time_dependent"
+fifty_percent = False
 max_delays = {"time_dependent": 3, "state_dependent": 1 / 2, "diffusion_delay": 1, "time_dependent_50_percent" : 3}
-epochs_dict = {"time_dependent": 2000, "state_dependent": 1000, "diffusion_delay": 500, , "time_dependent_50_percent" : 2000}
+epochs_dict = {"time_dependent": 2000, "state_dependent": 1000, "diffusion_delay": 500,  "time_dependent_50_percent" : 2000}
 lr_dict = {"time_dependent": 1e-3, "state_dependent": 1e-3, "diffusion_delay": 1e-4,  "time_dependent_50_percent" : 1e-3}
 lr, epochs = lr_dict[name_dataset], epochs_dict[name_dataset]
 tse_loss, noisyless_tse_mse = [], []
@@ -247,7 +248,6 @@ for train_test_split_idx in range(1, 6):
                 np.load(
                     f"../data/"
                     + str(name_dataset)
-                    + ""
                     + "/ts_"
                     + str(int(noise_level))
                     + "_noise_level.npy"
@@ -421,7 +421,7 @@ for train_test_split_idx in range(1, 6):
             t,
             data_type="train",
             extrap=extrapolate,
-            history_nb_time_step= int(t.shape[0]//2) if name_dataset== "time_dependent_50_percent" else t_history.shape[0] ,
+            history_nb_time_step= int(t.shape[0]//2) if fifty_percent else t_history.shape[0] ,
         ),
     )
     dlval = DataLoader(
@@ -433,7 +433,7 @@ for train_test_split_idx in range(1, 6):
             t,
             data_type="test",
             extrap=extrapolate,
-            history_nb_time_step=int(t.shape[0]//2) if name_dataset== "time_dependent_50_percent" else t_history.shape[0] 
+            history_nb_time_step=int(t.shape[0]//2) if fifty_percent else t_history.shape[0] 
         ),
     )
     dltest = DataLoader(
@@ -445,7 +445,7 @@ for train_test_split_idx in range(1, 6):
             t,
             data_type="test",
             extrap=extrapolate,
-            history_nb_time_step= int(t.shape[0]//2) if name_dataset== "time_dependent_50_percent" else t_history.shape[0] 
+            history_nb_time_step= int(t.shape[0]//2) if fifty_percent else t_history.shape[0] 
         ),
     )
 
