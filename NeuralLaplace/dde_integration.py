@@ -13,14 +13,12 @@ import os
 from torchlaplace.core import laplace_reconstruct
 from torchlaplace.data_utils import basic_collate_fn
 
-normalize_dataset = True
 batch_size =  128 * 2 
 extrapolate = True
 latent_dim = 2
 hidden_units = 64
 encode_obs_time = True
 s_recon_terms = 33
-learning_rate = 1e-4
 patience = None
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -656,14 +654,7 @@ for train_test_split_idx in range(1, 6):
                 + f"/split_index_{train_test_split_idx}/testing_phase.png"
             )
             plt.close()
-        # predictions = torch.cat([trajs_to_encode, predictions], axis=1)
-        # for i in range(10):
-        #     plt.plot(predictions.detach().cpu()[i, :, 0])
-        #     plt.plot(predictions.detach().cpu()[i, :, 1])
-        #     plt.show()
-
-        #     plt.plot(predictions.detach().cpu()[i, :, 0], predictions.detach().cpu()[i, :, 1])
-        #     plt.show()
+        
         if name_dataset == "time_dependent":
             np.save(
                 f"../results/"
