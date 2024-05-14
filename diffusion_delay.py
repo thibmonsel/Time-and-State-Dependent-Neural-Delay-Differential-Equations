@@ -8,12 +8,10 @@ import jax.nn as jnn
 import jax.numpy as jnp
 import jax.random as jrandom
 import matplotlib.pyplot as plt
-from dataset import diffusion_delay
 from diffrax import Delays
 from jax.lib import xla_bridge
 from models import (
     PDEANODE,
-    fit,
     fit_latent,
     LatentODE,
     PDENeuralODE,

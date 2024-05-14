@@ -2,17 +2,11 @@ import argparse
 from diffrax import Delays
 import json
 import equinox as eqx
-import jax
-import jax.nn as jnn
 import jax.numpy as jnp
 import jax.random as jrandom
-import jaxlib
 import os
-import matplotlib.pyplot as plt
-import numpy as np
-import numpy.random as random
 from models import NeuralDDEWithTimeModif, NeuralDDE_Modif, ANODE, NeuralODE, LatentODE
-from utils import plot_subplots, plot_subplots_1d, plot_subplots_diff_1d, predict_other_history
+from utils import plot_subplots, predict_other_history
 from utils import dic_act
 
 #### CHANGE ACCORDING TO WHERE MODEL WAS SAVED ######

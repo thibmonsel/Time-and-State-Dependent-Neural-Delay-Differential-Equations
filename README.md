@@ -27,7 +27,12 @@ python generate_dataset.py --dataset=diffusion_delay
 
 # To launch training for experiments :
 
-You must install diffrax locally by : 
+Dependencies include : 
+```
+jax, jaxlib, equinox, lineax, optax, numpy, matplotlib
+```
+
+You must install locally the following two packages by : 
 ```bash
 cd diffrax/
 pip install . 
