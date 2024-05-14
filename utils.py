@@ -191,16 +191,16 @@ def plot_subplots_1d(
 
     plt.rc("font", **font)
     maxi, mini = 0, 0
-    labels = ["truth", "ode", "anode", "laplace", "latent_ode", "sddde"]
+    labels = ["truth", "ode", "anode", "laplace", "sddde"]
     for ys_pred, i in zip(
-        (ys_truth, ode_ys, anode_ys, laplace_ys, latent_ode_ys, dde_ys),
+        (ys_truth, ode_ys, anode_ys, laplace_ys, dde_ys),
         [i for i in range(len(labels))],
     ):
         maxi = max(maxi, np.max(ys_pred[random_idx]).all())
         mini = min(mini, np.max(ys_pred[random_idx]).all())
     fig, axes = plt.subplots(figsize=(4.2 * 4.2, 4.2), nrows=1, ncols=len(labels))
     for ys_pred, i in zip(
-        (ys_truth, ode_ys, anode_ys, laplace_ys, latent_ode_ys, dde_ys),
+        (ys_truth, ode_ys, anode_ys, laplace_ys, dde_ys),
         [i for i in range(len(labels))],
     ):
         im = axes[i].imshow(
@@ -225,7 +225,7 @@ def plot_subplots_1d(
 
 
 def plot_subplots_diff_1d(
-    nb_subplots, ts, ode_ys, anode_ys, latent_ode_ys, dde_ys, laplace_ys, ys_truth
+    nb_subplots, ts, ode_ys, anode_ys, dde_ys, laplace_ys, ys_truth
 ):
     nb_datapoint, pred_length, _ = dde_ys.shape
     random_idx = random.randint(0, nb_datapoint - 1, size=1, dtype=int)
@@ -233,19 +233,19 @@ def plot_subplots_diff_1d(
 
     plt.rc("font", **font)
     maxi = 0
-    labels = ["truth", "ode", "anode", "laplace", "latent_ode", "sddde"]
+    labels = ["truth", "ode", "anode", "laplace",  "sddde"]
     fig, axes = plt.subplots(
         figsize=(4.2 * 4.2, 4.2), nrows=1, ncols=len(labels)
     )  # figsize=(4*4,4),extent=[0,4,1,0],
     for ys_pred, i in zip(
-        (ys_truth, ode_ys, anode_ys, laplace_ys, latent_ode_ys, dde_ys),
+        (ys_truth, ode_ys, anode_ys, laplace_ys, dde_ys),
         [i for i in range(len(labels))],
     ):
         maxi = max(
             maxi, jnp.max(jnp.abs((ys_pred[random_idx] - ys_truth[random_idx]))).all()
         )
     for ys_pred, i in zip(
-        (ys_truth, ode_ys, anode_ys, laplace_ys, latent_ode_ys, dde_ys),
+        (ys_truth, ode_ys, anode_ys, laplace_ys, dde_ys),
         [i for i in range(len(labels))],
     ):
         im = axes[i].imshow(

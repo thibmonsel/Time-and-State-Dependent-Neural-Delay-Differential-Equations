@@ -5,22 +5,24 @@ import equinox as eqx
 import jax.numpy as jnp
 import jax.random as jrandom
 import os
+import numpy as np
 from models import NeuralDDEWithTime, PDENeuralDDE, PDENeuralODE, PDEANODE, NeuralDDE, ANODE, NeuralODE, LatentODE
 from utils import plot_subplots, plot_subplots_1d, plot_subplots_diff_1d,predict, dic_act
 
 
 #### CHANGE ACCORDING TO WHERE MODEL WAS SAVED ######
-dde_path = "meta_data/diffusion/dde"
-anode_path = "meta_data/diffusion/anode"
-ode_path = "meta_data/diffusion/ode"
-latent_ode_path = "meta_data/diffusion/latent_ode"
+dde_path = "cluster_jobs/state_dep/dde"
+anode_path = "cluster_jobs/state_dep/anode"
+ode_path = "cluster_jobs/state_dep/ode"
+latent_ode_path = "cluster_jobs/state_dep/latent_ode"
 
 dde_runs = [filename for filename in os.listdir(dde_path)]
 anode_runs = [filename for filename in os.listdir(anode_path)]
 latent_ode_runs = [filename for filename in os.listdir(latent_ode_path)]
 ode_runs = [filename for filename in os.listdir(ode_path)]
 
-seed_train_test_split = 1
+seed_train_test_split = np.random.randint(1,5)
+print(f"seed_train_test_split:{seed_train_test_split}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generating dataset")
@@ -35,10 +37,8 @@ if __name__ == "__main__":
         nb_plots = 2
         delays = Delays(
             delays=[lambda t, y, args: 1 / 2 * jnp.cos(y[0])],
-            max_discontinuities=100,
-            recurrent_checking=False,
-            rtol=10e-3,
-            atol=10e-6,
+            max_discontinuities=3,
+            recurrent_checking=False
         )
         ####### LOADING TEST DATASET #######
         ys_extrapolate, ts = jnp.load("data/state_dependent/ys_extrapolate.npy"), jnp.load(
@@ -46,7 +46,7 @@ if __name__ == "__main__":
         )
         data_size = ys_extrapolate.shape[-1]
         #### LOADING TRAINED DDE MODEL ####
-        with open(dde_path + "/" +  dde_runs[0] + "/hyper_parameters.json") as json_file:
+        with open(dde_path + "/" +  dde_runs[seed_train_test_split] + "/hyper_parameters.json") as json_file:
             hyperparams = json.load(json_file)[0]["metadata"]
 
         model_dde = NeuralDDEWithTime(
@@ -59,11 +59,11 @@ if __name__ == "__main__":
         )
 
         model_dde_loaded = eqx.tree_deserialise_leaves(
-            dde_path + "/" +  dde_runs[0] + "/dde/last.eqx", model_dde
+            dde_path + "/" +  dde_runs[seed_train_test_split] + "/dde/last.eqx", model_dde
         )
 
         #### LOADING TRAINED ANODE MODEL ####
-        with open(anode_path + "/"+ anode_runs[0] + "/hyper_parameters.json") as json_file:
+        with open(anode_path + "/"+ anode_runs[seed_train_test_split] + "/hyper_parameters.json") as json_file:
             hyperparams = json.load(json_file)[0]["metadata"]
 
         anode = ANODE(
@@ -75,11 +75,11 @@ if __name__ == "__main__":
             key=key,
         )
         anode_loaded = eqx.tree_deserialise_leaves(
-            anode_path + "/"+ anode_runs[0] + "/anode/last.eqx", anode
+            anode_path + "/"+ anode_runs[seed_train_test_split] + "/anode/last.eqx", anode
         )
 
         #### LOADING TRAINED NODE MODEL ####
-        with open(ode_path + "/" + ode_runs[0] + "/hyper_parameters.json") as json_file:
+        with open(ode_path + "/" + ode_runs[seed_train_test_split] + "/hyper_parameters.json") as json_file:
             hyperparams = json.load(json_file)[0]["metadata"]
 
         model_ode = NeuralODE(
@@ -91,11 +91,11 @@ if __name__ == "__main__":
         )
 
         model_ode_loaded = eqx.tree_deserialise_leaves(
-            ode_path + "/" +  ode_runs[0] + "/ode/last.eqx", model_ode
+            ode_path + "/" +  ode_runs[seed_train_test_split] + "/ode/last.eqx", model_ode
         )
 
         #### LOADING TRAINED LATENT ODE MODEL ####
-        with open(latent_ode_path + "/" +  latent_ode_runs[0] + "/hyper_parameters.json") as json_file:
+        with open(latent_ode_path + "/" +  latent_ode_runs[seed_train_test_split] + "/hyper_parameters.json") as json_file:
             hyperparams = json.load(json_file)[0]["metadata"]
 
         latent_ode = LatentODE(
@@ -108,7 +108,7 @@ if __name__ == "__main__":
         )
 
         latent_ode_loaded = eqx.tree_deserialise_leaves(
-            latent_ode_path + "/" +  latent_ode_runs[0] + "/latent_ode/last.eqx", latent_ode
+            latent_ode_path + "/" +  latent_ode_runs[seed_train_test_split] + "/latent_ode/last.eqx", latent_ode
         )
 
         ###### PREDICTION TEST DATASET ##########
@@ -122,18 +122,19 @@ if __name__ == "__main__":
             ys_extrapolate,
         )
 
-        ypred_laplace = jnp.load("results/" + str(args.dataset) + f"/split_index_{seed_train_test_split}/ys_test_pred.npy")
+        ypred_laplace = jnp.load("results/" + str(args.dataset) + f"/split_index_{seed_train_test_split}/ys_extrapolate_pred.npy")
         
-        plot_subplots(
-            nb_plots,
-            ts,
-            ypred_ode,
-            anode_ypred,
-            ypred_dde,
-            ypred_latent,
-            ypred_laplace,
-            ys_extrapolate,
-        )
+        for i in range(10):
+            plot_subplots(
+                nb_plots,
+                ts,
+                ypred_ode,
+                anode_ypred,
+                ypred_dde,
+                ypred_latent,
+                ypred_laplace,
+                ys_extrapolate,
+            )
 
     if args.dataset == "time_dependent":
         nb_plots = 2
@@ -148,7 +149,7 @@ if __name__ == "__main__":
         )
         data_size = ys_extrapolate.shape[-1]
         #### LOADING TRAINED DDE MODEL ####
-        with open(dde_path + "/" +  dde_runs[0] + "/hyper_parameters.json") as json_file:
+        with open(dde_path + "/" +  dde_runs[seed_train_test_split] + "/hyper_parameters.json") as json_file:
             hyperparams = json.load(json_file)[0]["metadata"]
 
         model_dde = NeuralDDE(
@@ -161,11 +162,11 @@ if __name__ == "__main__":
         )
 
         model_dde_loaded = eqx.tree_deserialise_leaves(
-            dde_path + "/" +  dde_runs[0] + "/dde/last.eqx", model_dde
+            dde_path + "/" +  dde_runs[seed_train_test_split] + "/dde/last.eqx", model_dde
         )
 
         #### LOADING TRAINED ANODE MODEL ####
-        with open(anode_path + "/"+ anode_runs[0] + "/hyper_parameters.json") as json_file:
+        with open(anode_path + "/"+ anode_runs[seed_train_test_split] + "/hyper_parameters.json") as json_file:
             hyperparams = json.load(json_file)[0]["metadata"]
 
         anode = ANODE(
@@ -177,11 +178,11 @@ if __name__ == "__main__":
             key=key,
         )
         anode_loaded = eqx.tree_deserialise_leaves(
-            anode_path + "/"+ anode_runs[0] + "/anode/last.eqx", anode
+            anode_path + "/"+ anode_runs[seed_train_test_split] + "/anode/last.eqx", anode
         )
 
         #### LOADING TRAINED NODE MODEL ####
-        with open(ode_path + "/" + ode_runs[0] + "/hyper_parameters.json") as json_file:
+        with open(ode_path + "/" + ode_runs[seed_train_test_split] + "/hyper_parameters.json") as json_file:
             hyperparams = json.load(json_file)[0]["metadata"]
 
         model_ode = NeuralODE(
@@ -193,11 +194,11 @@ if __name__ == "__main__":
         )
 
         model_ode_loaded = eqx.tree_deserialise_leaves(
-            ode_path + "/" +  ode_runs[0] + "/ode/last.eqx", model_ode
+            ode_path + "/" +  ode_runs[seed_train_test_split] + "/ode/last.eqx", model_ode
         )
 
         #### LOADING TRAINED LATENT ODE MODEL ####
-        with open(latent_ode_path + "/" +  latent_ode_runs[0] + "/hyper_parameters.json") as json_file:
+        with open(latent_ode_path + "/" +  latent_ode_runs[seed_train_test_split] + "/hyper_parameters.json") as json_file:
             hyperparams = json.load(json_file)[0]["metadata"]
 
         latent_ode = LatentODE(
@@ -210,7 +211,7 @@ if __name__ == "__main__":
         )
 
         latent_ode_loaded = eqx.tree_deserialise_leaves(
-            latent_ode_path + "/" +  latent_ode_runs[0] + "/latent_ode/last.eqx", latent_ode
+            latent_ode_path + "/" +  latent_ode_runs[seed_train_test_split] + "/latent_ode/last.eqx", latent_ode
         )
 
         ###### PREDICTION TEST DATASET ##########
@@ -252,7 +253,7 @@ if __name__ == "__main__":
         a_sample_extrapolate = jnp.load("data/diffusion_delay/a_sample_extrapolate.npy")
         data_size = ys_extrapolate.shape[-1]
         #### LOADING TRAINED DDE MODEL ####
-        with open(dde_path + "/" +  dde_runs[0] + "/hyper_parameters.json") as json_file:
+        with open(dde_path + "/" +  dde_runs[seed_train_test_split] + "/hyper_parameters.json") as json_file:
             hyperparams = json.load(json_file)[0]["metadata"]
 
         model_dde = PDENeuralDDE(
@@ -265,11 +266,11 @@ if __name__ == "__main__":
         )
 
         model_dde_loaded = eqx.tree_deserialise_leaves(
-            dde_path + "/" +  dde_runs[0] + "/dde/last.eqx", model_dde
+            dde_path + "/" +  dde_runs[seed_train_test_split] + "/dde/last.eqx", model_dde
         )
 
         #### LOADING TRAINED ANODE MODEL ####
-        with open(anode_path + "/"+ anode_runs[0] + "/hyper_parameters.json") as json_file:
+        with open(anode_path + "/"+ anode_runs[seed_train_test_split] + "/hyper_parameters.json") as json_file:
             hyperparams = json.load(json_file)[0]["metadata"]
 
         anode = PDEANODE(
@@ -281,11 +282,11 @@ if __name__ == "__main__":
             key=key,
         )
         anode_loaded = eqx.tree_deserialise_leaves(
-            anode_path + "/"+ anode_runs[0] + "/anode/last.eqx", anode
+            anode_path + "/"+ anode_runs[seed_train_test_split] + "/anode/last.eqx", anode
         )
 
         #### LOADING TRAINED NODE MODEL ####
-        with open(ode_path + "/" + ode_runs[0] + "/hyper_parameters.json") as json_file:
+        with open(ode_path + "/" + ode_runs[seed_train_test_split] + "/hyper_parameters.json") as json_file:
             hyperparams = json.load(json_file)[0]["metadata"]
 
         model_ode = PDENeuralODE(
@@ -297,11 +298,11 @@ if __name__ == "__main__":
         )
 
         model_ode_loaded = eqx.tree_deserialise_leaves(
-            ode_path + "/" +  ode_runs[0] + "/ode/last.eqx", model_ode
+            ode_path + "/" +  ode_runs[seed_train_test_split] + "/ode/last.eqx", model_ode
         )
 
         #### LOADING TRAINED LATENT ODE MODEL ####
-        with open(latent_ode_path + "/" +  latent_ode_runs[0] + "/hyper_parameters.json") as json_file:
+        with open(latent_ode_path + "/" +  latent_ode_runs[seed_train_test_split] + "/hyper_parameters.json") as json_file:
             hyperparams = json.load(json_file)[0]["metadata"]
 
         latent_ode = LatentODE(
@@ -314,7 +315,7 @@ if __name__ == "__main__":
         )
 
         latent_ode_loaded = eqx.tree_deserialise_leaves(
-            latent_ode_path + "/" +  latent_ode_runs[0] + "/latent_ode/last.eqx", latent_ode
+            latent_ode_path + "/" +  latent_ode_runs[seed_train_test_split] + "/latent_ode/last.eqx", latent_ode
         )
 
         ###### PREDICTION TEST DATASET ##########

@@ -226,7 +226,7 @@ def get_other_history_fn_dataset(name, device):
 
 fifty_percent = False
 noise_level = 0
-name_dataset = "diffusion_delay"
+name_dataset = "time_dependent"
 max_delays = {"time_dependent": 3, "state_dependent": 1 / 2, "diffusion_delay": 1}
 epochs_dict = {"time_dependent": 2000, "state_dependent": 1000, "diffusion_delay": 500}
 lr_dict = {"time_dependent": 1e-3, "state_dependent": 1e-3, "diffusion_delay": 0.01}
