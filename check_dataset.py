@@ -34,7 +34,6 @@ plt.show()
 dataset = "diffusion_delay"
 data_pth = "data/" + dataset
 
-ts = jnp.load(data_pth + "/ts.npy")
 ys = jnp.load(data_pth + "/ys.npy")
 
 for i in range(5):
@@ -47,7 +46,7 @@ print("EXTRAPOLATE DATASETS")
 dataset = "time_dependent"
 data_pth = "data/" + dataset
 
-ts = jnp.load(data_pth + "/ts_5_noise_level.npy")
+ts = jnp.load(data_pth + "/ts_0_noise_level.npy")
 ys = jnp.load(data_pth + "/ys_extrapolate.npy")
 
 for i in range(200):
@@ -67,7 +66,6 @@ plt.show()
 dataset = "diffusion_delay"
 data_pth = "data/" + dataset
 
-ts = jnp.load(data_pth + "/ts.npy")
 ys = jnp.load(data_pth + "/ys_extrapolate.npy")
 
 for i in range(5):
