@@ -11,10 +11,10 @@ from utils import plot_subplots, plot_subplots_1d, plot_subplots_diff_1d,predict
 
 
 #### CHANGE ACCORDING TO WHERE MODEL WAS SAVED ######
-dde_path = "cluster_jobs/state_dep/dde"
-anode_path = "cluster_jobs/state_dep/anode"
-ode_path = "cluster_jobs/state_dep/ode"
-latent_ode_path = "cluster_jobs/state_dep/latent_ode"
+dde_path = "cluster_jobs/diffusion_delay_mlp_128/dde"
+anode_path = "cluster_jobs/diffusion_delay_mlp_128/anode"
+ode_path = "cluster_jobs/diffusion_delay_mlp_128/ode"
+latent_ode_path = "cluster_jobs/diffusion_delay_mlp_128/latent_ode"
 
 dde_runs = [filename for filename in os.listdir(dde_path)]
 anode_runs = [filename for filename in os.listdir(anode_path)]
@@ -147,6 +147,7 @@ if __name__ == "__main__":
         ys_extrapolate, ts = jnp.load("data/time_dependent/ys_extrapolate.npy"), jnp.load(
             "data/time_dependent/ts_0_noise_level.npy"
         )
+        print('ys_extrapolate',ys_extrapolate.shape)
         data_size = ys_extrapolate.shape[-1]
         #### LOADING TRAINED DDE MODEL ####
         with open(dde_path + "/" +  dde_runs[seed_train_test_split] + "/hyper_parameters.json") as json_file:
@@ -164,7 +165,7 @@ if __name__ == "__main__":
         model_dde_loaded = eqx.tree_deserialise_leaves(
             dde_path + "/" +  dde_runs[seed_train_test_split] + "/dde/last.eqx", model_dde
         )
-
+        
         #### LOADING TRAINED ANODE MODEL ####
         with open(anode_path + "/"+ anode_runs[seed_train_test_split] + "/hyper_parameters.json") as json_file:
             hyperparams = json.load(json_file)[0]["metadata"]
@@ -242,7 +243,7 @@ if __name__ == "__main__":
     if args.dataset == "diffusion_delay":
         nb_plots = 4
         delays = Delays(
-            delays=[lambda t, y, args: 2.0],
+            delays=[lambda t, y, args: 1.0],
             initial_discontinuities=jnp.array([0.0]),
             max_discontinuities=2,
         )
@@ -330,25 +331,45 @@ if __name__ == "__main__":
             a_sample_extrapolate
         )
 
-        ypred_laplace = jnp.load("results/" + str(args.dataset) + "/split_index_1/ys_test_pred.npy")
+        ypred_laplace = jnp.load("results/" + str(args.dataset) + "/split_index_1/ys_extrapolate_pred.npy")
         
-        plot_subplots_1d(
-            nb_plots,
-            ts,
-            ypred_ode,
-            anode_ypred,
-            ypred_dde,
-            ypred_latent,
-            ypred_laplace,
-            ys_extrapolate,
-        )
-        plot_subplots_diff_1d(
-            nb_plots,
-            ts,
-            ypred_ode,
-            anode_ypred,
-            ypred_dde,
-            ypred_latent,
-            ypred_laplace,
-            ys_extrapolate,
-        )
+        for i in range(4):
+            import matplotlib.pyplot as plt           
+        
+            # plt.subplot(1,5,1)
+            # plt.imshow(ys_extrapolate[i])
+            # plt.colorbar()
+            # plt.subplot(1,5,2)
+            # plt.imshow(ypred_ode[i])
+            # plt.colorbar()
+            # plt.subplot(1,5,3)
+            # plt.imshow(anode_ypred[i])
+            # plt.colorbar()
+            # plt.subplot(1,5,4)
+            # plt.imshow(ypred_dde[i])
+            # plt.colorbar()
+            # plt.subplot(1,5,4)
+            # plt.imshow(ypred_laplace[i])
+            # plt.colorbar()
+            # plt.show()
+            # plt.close()
+            plot_subplots_1d(
+                nb_plots,
+                ts,
+                ypred_ode,
+                anode_ypred,
+                ypred_dde,
+                ypred_latent,
+                ypred_laplace,
+                ys_extrapolate,
+            )
+            plot_subplots_diff_1d(
+                nb_plots,
+                ts,
+                ypred_ode,
+                anode_ypred,
+                ypred_dde,
+                ypred_latent,
+                ypred_laplace,
+                ys_extrapolate,
+            )

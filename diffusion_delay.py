@@ -73,7 +73,6 @@ if __name__ == "__main__":
     print("a_sample.shape, a_sample_test.shape", a_sample.shape, a_sample_test.shape)
 
     xs = jnp.linspace(0, 1.0, 100)
-    ts = jnp.linspace(0, 10.0, 100)
 
     batch_size = 256
     width, depth, activation = 64, 3, "relu"
@@ -145,7 +144,7 @@ if __name__ == "__main__":
         os.makedirs(default_dir + "/dde")
         os.makedirs(default_dir + "/dde/training")
         delays = Delays(
-            delays=[lambda t, y, args: 2.0],
+            delays=[lambda t, y, args: 1.0],
             initial_discontinuities=jnp.array([0.0]),
             max_discontinuities=2,
         )
