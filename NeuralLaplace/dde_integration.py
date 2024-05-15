@@ -226,10 +226,10 @@ def get_other_history_fn_dataset(name, device):
 
 fifty_percent = False
 noise_level = 0
-name_dataset = "time_dependent"
+name_dataset = "diffusion_delay"
 max_delays = {"time_dependent": 3, "state_dependent": 1 / 2, "diffusion_delay": 1}
 epochs_dict = {"time_dependent": 2000, "state_dependent": 1000, "diffusion_delay": 500}
-lr_dict = {"time_dependent": 1e-3, "state_dependent": 1e-3, "diffusion_delay": 0.01}
+lr_dict = {"time_dependent": 1e-3, "state_dependent": 1e-3, "diffusion_delay": 1e-4}
 batch_size_dic =  {"time_dependent": 256, "state_dependent": 256, "diffusion_delay": 128}
 lr, epochs, batch_size = lr_dict[name_dataset], epochs_dict[name_dataset], batch_size_dic[name_dataset]
 tse_loss, noisyless_tse_mse = [], []
