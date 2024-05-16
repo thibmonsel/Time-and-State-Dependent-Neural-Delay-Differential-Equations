@@ -11,10 +11,10 @@ from utils import plot_subplots, plot_subplots_1d, plot_subplots_diff_1d,predict
 
 
 #### CHANGE ACCORDING TO WHERE MODEL WAS SAVED ######
-dde_path = "cluster_jobs/state_dep/dde"
-anode_path = "cluster_jobs/state_dep/anode"
-ode_path = "cluster_jobs/state_dep/ode"
-latent_ode_path = "cluster_jobs/state_dep/latent_ode"
+dde_path = "cluster_jobs/diffusion_delay_mlp_128/dde"
+anode_path = "cluster_jobs/diffusion_delay_mlp_128/anode"
+ode_path = "cluster_jobs/diffusion_delay_mlp_128/ode"
+latent_ode_path = "cluster_jobs/diffusion_delay_mlp_128/latent_ode"
 
 dde_runs = [filename for filename in os.listdir(dde_path)]
 anode_runs = [filename for filename in os.listdir(anode_path)]
@@ -357,8 +357,8 @@ if __name__ == "__main__":
                 ts,
                 ypred_ode,
                 anode_ypred,
-                ypred_dde,
                 ypred_latent,
+                ypred_dde,
                 ypred_laplace,
                 ystest,
             )
@@ -367,8 +367,8 @@ if __name__ == "__main__":
                 ts,
                 ypred_ode,
                 anode_ypred,
-                ypred_dde,
                 ypred_latent,
+                ypred_dde,
                 ypred_laplace,
                 ystest,
             )

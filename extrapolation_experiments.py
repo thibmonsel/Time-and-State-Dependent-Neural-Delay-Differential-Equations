@@ -334,32 +334,13 @@ if __name__ == "__main__":
         ypred_laplace = jnp.load("results/" + str(args.dataset) + "/split_index_1/ys_extrapolate_pred.npy")
         
         for i in range(4):
-            import matplotlib.pyplot as plt           
-        
-            # plt.subplot(1,5,1)
-            # plt.imshow(ys_extrapolate[i])
-            # plt.colorbar()
-            # plt.subplot(1,5,2)
-            # plt.imshow(ypred_ode[i])
-            # plt.colorbar()
-            # plt.subplot(1,5,3)
-            # plt.imshow(anode_ypred[i])
-            # plt.colorbar()
-            # plt.subplot(1,5,4)
-            # plt.imshow(ypred_dde[i])
-            # plt.colorbar()
-            # plt.subplot(1,5,4)
-            # plt.imshow(ypred_laplace[i])
-            # plt.colorbar()
-            # plt.show()
-            # plt.close()
-            plot_subplots_1d(
+           plot_subplots_1d(
                 nb_plots,
                 ts,
                 ypred_ode,
                 anode_ypred,
-                ypred_dde,
                 ypred_latent,
+                ypred_dde,
                 ypred_laplace,
                 ys_extrapolate,
             )
@@ -368,8 +349,8 @@ if __name__ == "__main__":
                 ts,
                 ypred_ode,
                 anode_ypred,
-                ypred_dde,
                 ypred_latent,
+                ypred_dde,
                 ypred_laplace,
                 ys_extrapolate,
             )

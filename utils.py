@@ -225,7 +225,7 @@ def plot_subplots_1d(
 
 
 def plot_subplots_diff_1d(
-    nb_subplots, ts, ode_ys, anode_ys, dde_ys, laplace_ys, ys_truth
+    nb_subplots, ts, ode_ys, anode_ys, latent_ode_pred, dde_ys, laplace_ys, ys_truth
 ):
     nb_datapoint, pred_length, _ = dde_ys.shape
     random_idx = random.randint(0, nb_datapoint - 1, size=1, dtype=int)
