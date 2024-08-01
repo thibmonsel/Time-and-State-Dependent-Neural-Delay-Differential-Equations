@@ -332,7 +332,7 @@ class NeuralDDE(eqx.Module):
     def __call__(self, ts, y0):
         solution = diffrax.diffeqsolve(
             diffrax.ODETerm(self.func),
-            diffrax.Bosh3(),
+            diffrax.Dopri5(),
             t0=ts[0],
             t1=ts[-1],
             dt0=ts[1] - ts[0],
@@ -405,7 +405,7 @@ class PDEANODE(eqx.Module):
         )
         solution = diffrax.diffeqsolve(
             diffrax.ODETerm(self.func),
-            diffrax.Bosh3(),
+            diffrax.Dopri5(),
             t0=ts[0],
             t1=ts[-1],
             dt0=ts[1] - ts[0],
@@ -435,7 +435,7 @@ class PDENeuralODE(eqx.Module):
         fn_u0_partial = functools.partial(fn_u0_t, u0)
         solution = diffrax.diffeqsolve(
             diffrax.ODETerm(self.func),
-            diffrax.Bosh3(),
+            diffrax.Dopri5(),
             t0=ts[0],
             t1=ts[-1],
             dt0=ts[1] - ts[0],
