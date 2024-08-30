@@ -65,7 +65,6 @@ python state_dependent.py --model=MODEL --exp_path=EXP_PATH --seed=SEED
 ## To plot additional experiments
 
 *To plots the other experiments, you must train some model and change the path variables at the start of the file.*
-
 For the extrapolation regime : 
 ```bash 
 python extrapolation_experiments.py --dataset=DATASET
@@ -75,3 +74,6 @@ For the other history function
 ```bash 
 python different_history_experiments.py --dataset=DATASET
 ```
+
+where `DATASET = ["state_dependent", "time_dependent", "diffusion_delay"]`  (e.g `python different_history_experiments.py --dataset=diffusion_delay`)
+
