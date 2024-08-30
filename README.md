@@ -75,9 +75,25 @@ python dde_integration.py --noise_level=NOISE_LEVEL --dataset=DATASET           
 
 where `DATASET = ["state_dependent", "time_dependent", "diffusion_delay"]`
 
-## To plot additional experiments
+## To get MSE loss for the test set.
 
-*To plots the other experiments, you must train some model and change the path variables at the start of the file.*
+*To plots the MSE loss, you must train some model and change the path variables at the start of the file.*
+
+```bash 
+python merge_mse.py
+```
+
+## To plot experiment results
+
+*To plot the experiments, you must train some model and change the path variables at the start of the file.*
+
+For the testset regime : 
+
+```bash 
+python plot_testset.py --dataset=DATASET --noise_level=NOISE_LEVEL 
+```
+where the `--noise_level` is only used for `time_dependent` DATASET.
+
 For the extrapolation regime : 
 ```bash 
 python extrapolation_experiments.py --dataset=DATASET
@@ -88,4 +104,6 @@ For the other history function
 python different_history_experiments.py --dataset=DATASET
 ```
 
-**Raise an issue if a bug arises**
+# 
+**Raise an issue if a bug arises** 
+#
