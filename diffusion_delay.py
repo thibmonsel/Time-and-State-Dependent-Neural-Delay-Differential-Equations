@@ -52,7 +52,12 @@ if __name__ == "__main__":
 
     key = jrandom.PRNGKey(args.seed)
     model_key, view_key = jax.random.split(key, 2)
-    seed_train_test_split = os.environ["seed_train_test_split"]
+    try : 
+        seed_train_test_split = os.environ["seed_train_test_split"]
+    except:
+        seed_train_test_split = np.random.randint(1, 5)
+    
+    print("using seed_train_test_split", seed_train_test_split)
 
     ys_raw, ts = jnp.load("data/diffusion_delay/ys.npy"), jnp.load(
         "data/diffusion_delay/ts.npy"

@@ -1,12 +1,7 @@
-#!/bin/sh
-#SBATCH --job-name=dde_experiments     
-#SBATCH --time=3-0            
-#SBATCH --partition=besteffort
-#SBATCH --gres=gpu:1                    
-#SBATCH --output=out%j.out              
-#SBATCH --error=out%j.err               
+#!/bin/sh 
 set -x
 
+# This script is used to launch the experiments of the paper except the Neural Laplace model
 
 seed_train_test_split=$1
 export seed_train_test_split

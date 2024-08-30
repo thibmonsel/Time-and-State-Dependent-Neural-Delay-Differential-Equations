@@ -1,0 +1,58 @@
+[project]
+name = "neural_sddde"
+version = "0.0.1"
+description = "Neural SDDDE"
+readme = "README.md"
+requires-python = "~=3.9"
+authors = [
+    { name = "Thibault Monsel", email = "thibaultmonsel@gmail.com" }
+]
+keywords = ["torch", "dynamical-systems", "differential-equations", "deep-learning", "neural-differential-equations"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Financial and Insurance Industry",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+    "Topic :: Scientific/Engineering :: Mathematics",
+]
+urls = { repository = "https://github.com/thibmonsel/Time-and-State-Dependent-Neural-Delay-Differential-Equations" }
+dependencies = ["equinox", "numpy==1.26.4"]
+
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build]
+include = ["diffrax", "NeuralLaplace"]
+
+[tool.hatch.metadata] # Allows to install Github repositoires (error otherwise)
+allow-direct-references = true
+
+[tool.pytest.ini_options]
+addopts = "--jaxtyping-packages=torchdde,beartype.beartype(conf=beartype.BeartypeConf(strategy=beartype.BeartypeStrategy.On))"
+markers = ["slow"]
+
+[tool.ruff]
+extend-include = ["*.ipynb"]
+lint.fixable = ["I001", "F401"]
+lint.ignore = ["E402", "E721", "E731", "E741", "F722"]
+lint.ignore-init-module-imports = true
+lint.select = ["E", "F", "I001"]
+src = []
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+extra-standard-library = ["typing_extensions"]
+lines-after-imports = 2
+order-by-type = false
+
+[tool.pyright]
+reportIncompatibleMethodOverride = true
+include = ["torchbnn", "control_dde", "tests"]

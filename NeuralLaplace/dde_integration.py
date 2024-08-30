@@ -3,6 +3,7 @@ from copy import deepcopy
 from time import time
 
 import jax
+import argparse
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
 import numpy as np
@@ -20,6 +21,16 @@ encode_obs_time = True
 s_recon_terms = 33
 patience = None
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+parser = argparse.ArgumentParser(description="Running node experiments")
+parser.add_argument(
+    "--dataset",
+    help="which dataset to use",
+    choices=["time_dependent", "state_dependent", "diffusion_delay"],
+)
+parser.add_argument("--noise_level", type=int, default=0)
+args = parser.parse_args()
+
 
 # Model (encoder and Laplace representation func)
 class ReverseGRUEncoder(nn.Module):
@@ -224,9 +235,10 @@ def get_other_history_fn_dataset(name, device):
     return other_history_trajectories, amplitude_other_history, time_other_history
 
 
-fifty_percent = False
-noise_level = 0
-name_dataset = "diffusion_delay"
+
+fifty_percent = False # Corresponds to the small experiment where we feed 50% of the trajectory to Neural Laplace, set to False by default
+noise_level = args.noise_level # noise level to specify for the time dependent dataset
+name_dataset = args.dataset
 max_delays = {"time_dependent": 3, "state_dependent": 1 / 2, "diffusion_delay": 1}
 epochs_dict = {"time_dependent": 2000, "state_dependent": 1000, "diffusion_delay": 500}
 lr_dict = {"time_dependent": 1e-3, "state_dependent": 1e-3, "diffusion_delay": 1e-4}

@@ -25,30 +25,24 @@ python generate_dataset.py --dataset=state_dependent
 python generate_dataset.py --dataset=diffusion_delay 
 ```
 
+Please note that all data we be saved in `root/data/` path. By default we create 5 different train/test splits for the generate DATASET. 
+This can be changed with the argument `--seed_train_test_split`.
+
 # To launch training for experiments :
 
-Dependencies include : 
-```
-jax, jaxlib, equinox, lineax, optax, numpy, matplotlib
-```
-
-You must install locally the following two packages by : 
+You must install the repository the following two packages by : 
 ```bash
-cd diffrax/
-pip install . 
-cd ..
-cd NeuralLaplace
-pip install .
-cd ..
+pip install -e . 
 ```
 
-To launch the training you must refer the `seed` and the model (e.g. `["anode", "ode", "dde", "latent_ode"]`) used along with the noise level (only for the Time Dependent dataset)
+To launch the training you must refer the `seed`, the model (e.g. `["anode", "ode", "dde", "latent_ode"]`) used along with the noise level (only for the Time Dependent dataset) .Optionally you can specify which train test split to use `seed_train_test_split` in the bash script to train models `launch.sh`.
 
 ## For the Time Dependent dataset with a certain noise level : 
 
 ```bash 
 python time_dependent.py --model=MODEL --exp_path=EXP_PATH --seed=SEED --noise_level=NOISE_LEVEL
 ```
+
 
 ## For the State Dependent dataset : 
 
@@ -61,6 +55,23 @@ python state_dependent.py --model=MODEL --exp_path=EXP_PATH --seed=SEED
 ```bash 
 python state_dependent.py --model=MODEL --exp_path=EXP_PATH --seed=SEED
 ```
+
+Alternatively, you can the launch script to train the model. 
+
+```bash 
+bash launch 1
+```
+
+where 1 corresponds to the first train test split. 
+## For Neural Laplace model ...
+
+... you much run a seperate file : 
+
+```bash
+cd NeuralLaplace/
+python dde_integration.py --noise_level=NOISE_LEVEL --dataset=DATASET                                                                                                        (ecai_test) 
+```
+where `DATASET = ["state_dependent", "time_dependent", "diffusion_delay"]`
 
 ## To plot additional experiments
 
@@ -75,5 +86,4 @@ For the other history function
 python different_history_experiments.py --dataset=DATASET
 ```
 
-where `DATASET = ["state_dependent", "time_dependent", "diffusion_delay"]`  (e.g `python different_history_experiments.py --dataset=diffusion_delay`)
-
+**Raise an issue if a bug arises**
