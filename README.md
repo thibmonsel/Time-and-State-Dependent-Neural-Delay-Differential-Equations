@@ -74,6 +74,12 @@ where `1` corresponds to the first train test split.
 
 ## For Neural Laplace model ...
 
+... you must install the module :
+```bash 
+cd NeuralLaplace/
+pip install -e . 
+```
+
 ... you much run a seperate file : 
 
 ```bash
