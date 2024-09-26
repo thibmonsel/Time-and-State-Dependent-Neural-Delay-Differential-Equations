@@ -2,7 +2,6 @@ import argparse
 import json
 import os
 import jax
-import jax.nn as jnn
 import jax.numpy as jnp
 import jax.random as jrandom
 from diffrax import Delays

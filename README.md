@@ -2,6 +2,19 @@
 
 We provide instructions to generate all the data used in our paper along with the files to train each model and the papers additional experiments.
 
+# Installation 
+
+You must install the repository to install the dependencies : 
+```bash
+pip install . 
+```
+and install `diffrax` via :
+```bash
+cd diffrax
+pip install .
+cd ..
+```
+
 # To generate generate data for ... 
 
 ## ... the Time Dependent datasets : 
@@ -29,11 +42,6 @@ Please note that all data we be saved in `data/` path. By default we create 5 di
 This can be changed with the argument `--seed_train_test_split` in the launch command above.
 
 # To launch training for experiments :
-
-You must install the repository to install the dependencies : 
-```bash
-pip install -e . 
-```
 
 To launch the training you must refer the `seed`, the model (e.g. `["anode", "ode", "dde", "latent_ode"]`) used along with the noise level (only for the Time Dependent dataset) . Optionally you can specify which train test split to use `seed_train_test_split` in the bash script `launch.sh` to train models.
 
@@ -70,7 +78,7 @@ where `1` corresponds to the first train test split.
 
 ```bash
 cd NeuralLaplace/
-python dde_integration.py --noise_level=NOISE_LEVEL --dataset=DATASET                                                                                                        (ecai_test) 
+python dde_integration.py --noise_level=NOISE_LEVEL --dataset=DATASET                                                                                                      
 ```
 
 where `DATASET = ["state_dependent", "time_dependent", "diffusion_delay"]`

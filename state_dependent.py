@@ -13,6 +13,9 @@ import numpy as np
 from models import ANODE, fit, NeuralDDEWithTime, NeuralODE, LatentODE, fit_latent
 from utils import dic_act
 
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
+
 
 if __name__ == "__main__":
     print("Hardware :", xla_bridge.get_backend().platform)

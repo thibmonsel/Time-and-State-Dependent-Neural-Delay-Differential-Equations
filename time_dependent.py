@@ -20,6 +20,8 @@ from models import (
     NeuralODE,
 )
 from utils import dic_act
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
 if __name__ == "__main__":
