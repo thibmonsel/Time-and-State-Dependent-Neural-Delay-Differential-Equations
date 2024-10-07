@@ -20,6 +20,8 @@ from models import (
 )
 import numpy as np
 from utils import dic_act
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
 if __name__ == "__main__":

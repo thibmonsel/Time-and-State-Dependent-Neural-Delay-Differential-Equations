@@ -2,6 +2,19 @@
 
 We provide instructions to generate all the data used in our paper along with the files to train each model and the papers additional experiments.
 
+# Installation 
+
+You must install the repository to install the dependencies : 
+```bash
+pip install . 
+```
+and install `diffrax` via :
+```bash
+cd diffrax
+pip install .
+cd ..
+```
+
 # To generate generate data for ... 
 
 ## ... the Time Dependent datasets : 
@@ -29,11 +42,6 @@ Please note that all data we be saved in `data/` path. By default we create 5 di
 This can be changed with the argument `--seed_train_test_split` in the launch command above.
 
 # To launch training for experiments :
-
-You must install the repository to install the dependencies : 
-```bash
-pip install -e . 
-```
 
 To launch the training you must refer the `seed`, the model (e.g. `["anode", "ode", "dde", "latent_ode"]`) used along with the noise level (only for the Time Dependent dataset) . Optionally you can specify which train test split to use `seed_train_test_split` in the bash script `launch.sh` to train models.
 
@@ -66,18 +74,40 @@ where `1` corresponds to the first train test split.
 
 ## For Neural Laplace model ...
 
+... you must install the module :
+```bash 
+cd NeuralLaplace/
+pip install -e . 
+```
+
 ... you much run a seperate file : 
 
 ```bash
 cd NeuralLaplace/
-python dde_integration.py --noise_level=NOISE_LEVEL --dataset=DATASET                                                                                                        (ecai_test) 
+python dde_integration.py --noise_level=NOISE_LEVEL --dataset=DATASET                                                                                                      
 ```
 
 where `DATASET = ["state_dependent", "time_dependent", "diffusion_delay"]`
 
-## To plot additional experiments
+## To get MSE loss for the test set.
 
-*To plots the other experiments, you must train some model and change the path variables at the start of the file.*
+*To plots the MSE loss, you must train some model and change the path variables at the start of the file.*
+
+```bash 
+python merge_mse.py
+```
+
+## To plot experiment results
+
+*To plot the experiments, you must train some model and change the path variables at the start of the file.*
+
+For the testset regime : 
+
+```bash 
+python plot_testset.py --dataset=DATASET --noise_level=NOISE_LEVEL 
+```
+where the `--noise_level` is only used for `time_dependent` DATASET.
+
 For the extrapolation regime : 
 ```bash 
 python extrapolation_experiments.py --dataset=DATASET
@@ -88,4 +118,6 @@ For the other history function
 python different_history_experiments.py --dataset=DATASET
 ```
 
-**Raise an issue if a bug arises**
+# 
+**Raise an issue if a bug arises** 
+#

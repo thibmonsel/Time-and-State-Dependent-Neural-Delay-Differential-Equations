@@ -59,8 +59,8 @@ def plot_subplots(
         axes[i].plot(ts, laplace_ys[rdn_idx], label=labels[2], linewidth=5.0)
         axes[i].plot(ts, dde_ys[rdn_idx], label=labels[3], linewidth=5.0)
         axes[i].plot(ts, ys_truth[rdn_idx], "-.", label=labels[4], linewidth=5.0)
-        axes[i].set_xlabel("t")
-        axes[i].set_ylabel("y(t)")
+        axes[i].set_xlabel("t", fontsize=40)
+        axes[i].set_ylabel("y(t)", fontsize=40)
 
     plt.subplots_adjust(hspace=-3.0)
     handles, labels = axes[0].get_legend_handles_labels()
@@ -75,7 +75,7 @@ def plot_phase_space_subplots(
     nb_datapoint, pred_length, _ = dde_ys.shape
     random_idx = random.randint(0, nb_datapoint - 1, size=(nb_subplots,), dtype=int)
 
-    font = {"size": 25}
+    font = {"size": 50}
 
     plt.rc("font", **font)
 
@@ -122,7 +122,7 @@ def plot_phase_space_subplots(
         # axes.set_aspect("equal", adjustable="box")
     plt.subplots_adjust(hspace=-3.0)
     handles, labels = axes[i].get_legend_handles_labels()
-    fig.legend(handles, labels, loc="lower center", ncol=len(labels), prop={"size": 22})
+    fig.legend(handles, labels, loc="lower center", ncol=len(labels), prop={"size": 42})
     plt.tight_layout()
     plt.show()
 
@@ -187,7 +187,7 @@ def plot_subplots_1d(
 ):
     nb_datapoint, pred_length, _ = dde_ys.shape
     random_idx = random.randint(0, nb_datapoint - 1, size=1, dtype=int)
-    font = {"size": 25}
+    font = {"size": 50}
 
     plt.rc("font", **font)
     maxi, mini = 0, 0
