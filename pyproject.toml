@@ -22,7 +22,7 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Mathematics",
 ]
 urls = { repository = "https://github.com/thibmonsel/Time-and-State-Dependent-Neural-Delay-Differential-Equations" }
-dependencies = ["equinox @ git+https://github.com/patrick-kidger/equinox.git@main", "numpy==1.26.4", "jax==0.4.30", "jaxlib==0.4.30"]
+dependencies = ["equinox @ git+https://github.com/patrick-kidger/equinox.git@main", "numpy==1.26.4", "jax==0.4.30", "jaxlib==0.4.30", "optax", "matplotlib"]
 
 
 [build-system]
